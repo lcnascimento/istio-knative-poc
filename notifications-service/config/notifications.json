@@ -1,0 +1,37 @@
+[
+  {
+    "id": "1",
+    "app_key": "AppKey 1",
+    "name": "Notification 1",
+    "channel": "email",
+    "segment_id": "1"
+  },
+  {
+    "id": "2",
+    "app_key": "AppKey 1",
+    "name": "Notification 2",
+    "channel": "sms",
+    "segment_id": "2"
+  },
+  {
+    "id": "3",
+    "app_key": "AppKey 2",
+    "name": "Notification 3",
+    "channel": "email",
+    "segment_id": "3"
+  },
+  {
+    "id": "4",
+    "app_key": "AppKey 2",
+    "name": "Notification 4",
+    "channel": "sms",
+    "segment_id": "3"
+  },
+  {
+    "id": "5",
+    "app_key": "AppKey 3",
+    "name": "Notification 1",
+    "channel": "browser",
+    "segment_id": "10"
+  }
+]

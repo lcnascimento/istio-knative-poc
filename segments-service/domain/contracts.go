@@ -15,7 +15,7 @@ var ErrNotImplemented = fmt.Errorf("method not implemented yet")
 type SegmentsRepository interface {
 	FindSegment(ctx context.Context, id string) (*Segment, error)
 	ListSegments(ctx context.Context) ([]*Segment, error)
-	GetSegmentUsers(ctx context.Context, id string, options GetSegmentUsersOptions) (chan []*User, error)
+	GetSegmentUsers(ctx context.Context, id string, options GetSegmentUsersOptions) (chan []*User, chan error)
 }
 
 // GetSegmentUsersOptions ...

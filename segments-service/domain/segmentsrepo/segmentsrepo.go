@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -32,6 +33,8 @@ func NewRepository(in RepositoryInput) (*Repository, error) {
 
 // FindSegment ...
 func (r Repository) FindSegment(ctx context.Context, id string) (*domain.Segment, error) {
+	log.Printf("Fetching segment %s from database", id)
+
 	segments, err := r.ListSegments(ctx)
 	if err != nil {
 		return nil, err
@@ -48,6 +51,9 @@ func (r Repository) FindSegment(ctx context.Context, id string) (*domain.Segment
 
 // ListSegments ...
 func (r Repository) ListSegments(ctx context.Context) ([]*domain.Segment, error) {
+	log.Println("Fetching segments from database")
+	time.Sleep(r.in.NetworkDelay)
+
 	file, err := os.Open("config/segments.json")
 	if err != nil {
 		return nil, err
@@ -64,15 +70,26 @@ func (r Repository) ListSegments(ctx context.Context) ([]*domain.Segment, error)
 }
 
 // GetSegmentUsers ...
-func (r Repository) GetSegmentUsers(ctx context.Context, id string, options domain.GetSegmentUsersOptions) (chan []*domain.User, error) {
+func (r Repository) GetSegmentUsers(ctx context.Context, id string, options domain.GetSegmentUsersOptions) (chan []*domain.User, chan error) {
 	ch := make(chan []*domain.User)
+	errCh := make(chan error)
 
 	go func() {
+		defer close(ch)
+		defer close(errCh)
+
+		_, err := r.FindSegment(ctx, id)
+		if err != nil {
+			errCh <- err
+			return
+		}
+
 		numBulks := r.in.NumberOfUsersInSegments / options.BulkSize
 
 		for i := 0; i < numBulks; i++ {
 			bulk := []*domain.User{}
 
+			log.Println("Fetching users from database")
 			time.Sleep(r.in.NetworkDelay)
 			for j := 0; j < options.BulkSize; j++ {
 				bulk = append(bulk, &domain.User{
@@ -83,11 +100,13 @@ func (r Repository) GetSegmentUsers(ctx context.Context, id string, options doma
 				})
 			}
 
-			ch <- bulk
+			select {
+			case <-ctx.Done():
+				return
+			case ch <- bulk:
+			}
 		}
-
-		close(ch)
 	}()
 
-	return ch, nil
+	return ch, errCh
 }

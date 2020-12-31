@@ -3,10 +3,10 @@ package grpc
 import (
 	"context"
 	"log"
-	"sync"
 
 	pb "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc/proto"
 	"github.com/lcnascimento/istio-knative-poc/segments-service/domain"
+	"golang.org/x/sync/errgroup"
 )
 
 // ServerInput ...
@@ -38,37 +38,51 @@ func (s Server) GetSegment(ctx context.Context, in *pb.GetSegmentRequest) (*pb.G
 
 // GetSegmentUsers ...
 func (s Server) GetSegmentUsers(in *pb.GetSegmentUsersRequest, srv pb.SegmentsService_GetSegmentUsersServer) error {
-	log.Println("Fetching users from segment ", in.SegmentId)
+	ctx, done := context.WithCancel(srv.Context())
+	defer done()
 
-	wg := sync.WaitGroup{}
-	wg.Add(1)
+	ch, errCh := s.in.Repo.GetSegmentUsers(ctx, in.SegmentId, domain.GetSegmentUsersOptions{
+		BulkSize: int(in.Size),
+	})
 
-	go func() {
-		ch, err := s.in.Repo.GetSegmentUsers(srv.Context(), in.SegmentId, domain.GetSegmentUsersOptions{
-			BulkSize: int(in.Size),
-		})
-		if err != nil {
-			log.Fatalf("could not create GetSegmentUsers stream: %v", err)
-		}
+	g, _ := errgroup.WithContext(ctx)
 
+	g.Go(func() error {
 		for users := range ch {
 			resp := pb.GetSegmentUsersResponse{}
 			for _, u := range users {
 				resp.Data = append(resp.Data, u.ToGRPCDTO())
 			}
 
+			if err := srv.Context().Err(); err != nil {
+				done()
+				return err
+			}
+
 			log.Println("Sending message to client")
 			if err := srv.Send(&resp); err != nil {
-				log.Println("could not send message to client: ", err)
+				done()
+				return err
 			}
 		}
 
-		log.Println("All messages sent to client")
+		return nil
+	})
 
-		wg.Done()
-	}()
+	g.Go(func() error {
+		for err := range errCh {
+			done()
+			return err
+		}
 
-	wg.Wait()
+		return nil
+	})
 
+	if err := g.Wait(); err != nil {
+		log.Printf("Something went wrong: %s", err.Error())
+		return err
+	}
+
+	log.Println("Segment's users transfer completed")
 	return nil
 }

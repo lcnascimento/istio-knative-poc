@@ -7,6 +7,10 @@ package grpc;
 service NotificationsService {
   rpc GetNotification(GetNotificationRequest) returns (GetNotificationResponse);
   rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
+  rpc EnqueueSendingNotification(SendNotificationRequest) returns (Void);
+}
+
+service NotificationsSenderService {
   rpc SendNotification(SendNotificationRequest) returns (Void);
 }
 
@@ -38,10 +42,11 @@ message SendNotificationRequest {
 message Void {}
 
 message Notification {
-  string id       = 1;
-  string name     = 2;
-  string app_key  = 3;
-  string channel  = 4;
+  string id         = 1;
+  string name       = 2;
+  string app_key    = 3;
+  string channel    = 4;
+  string segment_id = 5;
 }
 
 message NotificationsFilter {
