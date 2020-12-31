@@ -4,3 +4,46 @@ option go_package = "github.com/lcnascimento/istio-knative-poc/audiences-service
 
 package grpc;
 
+service AudiencesServiceFrontend {
+  rpc GetAudience(GetAudienceRequest) returns (GetAudienceResponse);
+  rpc ListAudiences(ListAudiencesRequest) returns (ListAudiencesResponse);
+  rpc EnqueueAudienceSending(EnqueueAudienceSendingRequest) returns (Void);
+}
+
+service AudiencesServiceWorker {
+  rpc SendAudience(SendAudienceRequest) returns (Void);
+}
+
+message GetAudienceRequest {
+  string audience_id = 1;
+}
+
+message GetAudienceResponse {
+  Audience audience = 1;
+}
+
+message ListAudiencesRequest {
+}
+
+message ListAudiencesResponse {
+  repeated Audience audiences = 1;
+}
+
+message EnqueueAudienceSendingRequest {
+  string audience_id = 1;
+}
+
+message SendAudienceRequest {
+  string audience_id = 1;
+}
+
+message Audience {
+  string id = 1;
+  string app_key = 2;
+  string name = 3;
+  string segment_id = 4;
+  string provider = 5;
+}
+
+message Void {
+}
