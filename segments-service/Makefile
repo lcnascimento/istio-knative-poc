@@ -1,8 +1,8 @@
 GOPATH=$(shell go env GOPATH)
 PATH=$(GOPATH)/bin:$(shell echo $$PATH)
 
-@:
-	@go run cmd/grpcserver/main.go
+frontend:
+	@go run cmd/grpc/frontend/main.go
 
 protoc:
 	@echo "compiling ./application/grpc/proto/*.proto into ./application/grpc/proto/*.pb.go ..."

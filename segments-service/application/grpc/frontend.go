@@ -9,25 +9,25 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// ServerInput ...
-type ServerInput struct {
+// FrontendInput ...
+type FrontendInput struct {
 	Repo domain.SegmentsRepository
 }
 
-// Server ...
-type Server struct {
-	in ServerInput
+// Frontend ...
+type Frontend struct {
+	in FrontendInput
 
 	pb.UnimplementedSegmentsServiceServer
 }
 
-// NewServer ...
-func NewServer(in ServerInput) *Server {
-	return &Server{in: in}
+// NewFrontend ...
+func NewFrontend(in FrontendInput) *Frontend {
+	return &Frontend{in: in}
 }
 
 // GetSegment ...
-func (s Server) GetSegment(ctx context.Context, in *pb.GetSegmentRequest) (*pb.GetSegmentResponse, error) {
+func (s Frontend) GetSegment(ctx context.Context, in *pb.GetSegmentRequest) (*pb.GetSegmentResponse, error) {
 	segment, err := s.in.Repo.FindSegment(ctx, in.SegmentId)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (s Server) GetSegment(ctx context.Context, in *pb.GetSegmentRequest) (*pb.G
 }
 
 // GetSegmentUsers ...
-func (s Server) GetSegmentUsers(in *pb.GetSegmentUsersRequest, srv pb.SegmentsService_GetSegmentUsersServer) error {
+func (s Frontend) GetSegmentUsers(in *pb.GetSegmentUsersRequest, srv pb.SegmentsService_GetSegmentUsersServer) error {
 	ctx, done := context.WithCancel(srv.Context())
 	defer done()
 

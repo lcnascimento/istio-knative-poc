@@ -1,4 +1,4 @@
-package segmentsrepo
+package repository
 
 import (
 	"context"
@@ -11,28 +11,28 @@ import (
 	"github.com/lcnascimento/istio-knative-poc/segments-service/domain"
 )
 
-// RepositoryInput ...
-type RepositoryInput struct {
+// ServiceInput ...
+type ServiceInput struct {
 	NumberOfUsersInSegments int
 	NetworkDelay            time.Duration
 }
 
-// Repository ...
-type Repository struct {
-	in RepositoryInput
+// Service ...
+type Service struct {
+	in ServiceInput
 }
 
-// NewRepository ...
-func NewRepository(in RepositoryInput) (*Repository, error) {
+// NewService ...
+func NewService(in ServiceInput) (*Service, error) {
 	if in.NumberOfUsersInSegments == 0 {
 		in.NumberOfUsersInSegments = 100
 	}
 
-	return &Repository{in: in}, nil
+	return &Service{in: in}, nil
 }
 
 // FindSegment ...
-func (r Repository) FindSegment(ctx context.Context, id string) (*domain.Segment, error) {
+func (r Service) FindSegment(ctx context.Context, id string) (*domain.Segment, error) {
 	log.Printf("Fetching segment %s from database", id)
 
 	segments, err := r.ListSegments(ctx)
@@ -50,7 +50,7 @@ func (r Repository) FindSegment(ctx context.Context, id string) (*domain.Segment
 }
 
 // ListSegments ...
-func (r Repository) ListSegments(ctx context.Context) ([]*domain.Segment, error) {
+func (r Service) ListSegments(ctx context.Context) ([]*domain.Segment, error) {
 	log.Println("Fetching segments from database")
 	time.Sleep(r.in.NetworkDelay)
 
@@ -70,7 +70,7 @@ func (r Repository) ListSegments(ctx context.Context) ([]*domain.Segment, error)
 }
 
 // GetSegmentUsers ...
-func (r Repository) GetSegmentUsers(ctx context.Context, id string, options domain.GetSegmentUsersOptions) (chan []*domain.User, chan error) {
+func (r Service) GetSegmentUsers(ctx context.Context, id string, options domain.GetSegmentUsersOptions) (chan []*domain.User, chan error) {
 	ch := make(chan []*domain.User)
 	errCh := make(chan error)
 
