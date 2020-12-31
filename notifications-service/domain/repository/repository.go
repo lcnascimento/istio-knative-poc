@@ -1,4 +1,4 @@
-package notifrepo
+package repository
 
 import (
 	"context"
@@ -9,21 +9,21 @@ import (
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain"
 )
 
-// RepositoryInput ...
-type RepositoryInput struct {
+// ServiceInput ...
+type ServiceInput struct {
 }
 
-// Repository ...
-type Repository struct {
+// Service ...
+type Service struct {
 }
 
-// NewRepository ...
-func NewRepository(in RepositoryInput) (*Repository, error) {
-	return &Repository{}, nil
+// NewService ...
+func NewService(in ServiceInput) (*Service, error) {
+	return &Service{}, nil
 }
 
 // GetNotification ...
-func (r Repository) GetNotification(ctx context.Context, id string) (*domain.Notification, error) {
+func (r Service) GetNotification(ctx context.Context, id string) (*domain.Notification, error) {
 	log.Printf("Fetch notification %s from database", id)
 
 	notifications, err := r.ListNotifications(ctx)
@@ -41,7 +41,7 @@ func (r Repository) GetNotification(ctx context.Context, id string) (*domain.Not
 }
 
 // ListNotifications ...
-func (r Repository) ListNotifications(ctx context.Context) ([]*domain.Notification, error) {
+func (r Service) ListNotifications(ctx context.Context) ([]*domain.Notification, error) {
 	log.Printf("Fetch notifications from database")
 
 	file, err := os.Open("config/notifications.json")

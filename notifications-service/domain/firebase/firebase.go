@@ -7,22 +7,22 @@ import (
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain"
 )
 
-// SenderInput ...
-type SenderInput struct {
+// ServiceInput ...
+type ServiceInput struct {
 }
 
-// Sender ...
-type Sender struct {
-	in SenderInput
+// Service ...
+type Service struct {
+	in ServiceInput
 }
 
-// NewSender ...
-func NewSender(in SenderInput) (*Sender, error) {
-	return &Sender{in: in}, nil
+// NewService ...
+func NewService(in ServiceInput) (*Service, error) {
+	return &Service{in: in}, nil
 }
 
 // SendNotification ...
-func (s Sender) SendNotification(ctx context.Context, notif domain.Notification, ch chan []*domain.User) (chan bool, chan error) {
+func (s Service) SendNotification(ctx context.Context, notif domain.Notification, ch chan []*domain.User) (chan bool, chan error) {
 	done := make(chan bool)
 	errCh := make(chan error)
 

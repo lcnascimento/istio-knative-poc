@@ -1,4 +1,4 @@
-package notifsender
+package sender
 
 import (
 	"context"
@@ -8,20 +8,20 @@ import (
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain"
 )
 
-// SenderInput ...
-type SenderInput struct {
+// ServiceInput ...
+type ServiceInput struct {
 	Repo      domain.NotificationsRepository
 	Segments  domain.SegmentsService
 	Providers map[domain.Channel]domain.NotificationProvider
 }
 
-// Sender ...
-type Sender struct {
-	in SenderInput
+// Service ...
+type Service struct {
+	in ServiceInput
 }
 
-// NewSender ...
-func NewSender(in SenderInput) (*Sender, error) {
+// NewService ...
+func NewService(in ServiceInput) (*Service, error) {
 	if in.Repo == nil {
 		return nil, fmt.Errorf("Missing NotificationsRepository dependency")
 	}
@@ -34,11 +34,11 @@ func NewSender(in SenderInput) (*Sender, error) {
 		return nil, fmt.Errorf("Missing Providers dependency")
 	}
 
-	return &Sender{in: in}, nil
+	return &Service{in: in}, nil
 }
 
 // SendNotification ...
-func (s Sender) SendNotification(ctx context.Context, id string) error {
+func (s Service) SendNotification(ctx context.Context, id string) error {
 	log.Printf("Sending notification %s", id)
 
 	notif, err := s.in.Repo.GetNotification(ctx, id)

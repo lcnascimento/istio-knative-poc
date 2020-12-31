@@ -9,8 +9,8 @@ import (
 	app "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc"
 	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
 
-	enqueuer "github.com/lcnascimento/istio-knative-poc/notifications-service/domain/notifenqueuer"
-	repo "github.com/lcnascimento/istio-knative-poc/notifications-service/domain/notifrepo"
+	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain/enqueuer"
+	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain/repository"
 )
 
 const address = "localhost:8084"
@@ -21,17 +21,17 @@ func main() {
 		log.Fatalf("can not initialize gRPC server %v", err)
 	}
 
-	enqueuer, err := enqueuer.NewEnqueuer(enqueuer.EnqueuerInput{})
+	enqueuer, err := enqueuer.NewService(enqueuer.ServiceInput{})
 	if err != nil {
 		log.Fatalf("can not initialize NotificationsEnqueuer %v", err)
 	}
 
-	repo, err := repo.NewRepository(repo.RepositoryInput{})
+	repo, err := repository.NewService(repository.ServiceInput{})
 	if err != nil {
 		log.Fatalf("can not initialize NotificationsRepository %v", err)
 	}
 
-	server, err := app.NewServer(app.ServerInput{
+	server, err := app.NewFrontend(app.FrontendInput{
 		Repo:     repo,
 		Enqueuer: enqueuer,
 	})

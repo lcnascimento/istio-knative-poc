@@ -9,20 +9,19 @@ import (
 	app "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc"
 	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
 
-	repo "github.com/lcnascimento/istio-knative-poc/notifications-service/domain/notifrepo"
-	sender "github.com/lcnascimento/istio-knative-poc/notifications-service/domain/notifsender"
-
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain"
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain/firebase"
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain/movile"
+	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain/repository"
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain/segments"
+	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain/sender"
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain/sendgrid"
 )
 
 const address = "localhost:8084"
 
 func main() {
-	repo, err := repo.NewRepository(repo.RepositoryInput{})
+	repo, err := repository.NewService(repository.ServiceInput{})
 	if err != nil {
 		log.Fatalf("can not initialize NotificationsRepository %v", err)
 	}
@@ -38,17 +37,17 @@ func main() {
 		log.Fatalf("can not initialize SegmentsService gRPC Server %v", err)
 	}
 
-	movile, err := movile.NewSender(movile.SenderInput{})
+	movile, err := movile.NewService(movile.ServiceInput{})
 	if err != nil {
 		log.Fatalf("can not initialize MovileService %v", err)
 	}
 
-	sendgrid, err := sendgrid.NewSender(sendgrid.SenderInput{})
+	sendgrid, err := sendgrid.NewService(sendgrid.ServiceInput{})
 	if err != nil {
 		log.Fatalf("can not initialize SendgridService %v", err)
 	}
 
-	firebase, err := firebase.NewSender(firebase.SenderInput{})
+	firebase, err := firebase.NewService(firebase.ServiceInput{})
 	if err != nil {
 		log.Fatalf("can not initialize FirebaseService %v", err)
 	}
@@ -59,7 +58,7 @@ func main() {
 		domain.BrowserPushChannel: firebase,
 	}
 
-	sender, err := sender.NewSender(sender.SenderInput{
+	sender, err := sender.NewService(sender.ServiceInput{
 		Repo:      repo,
 		Segments:  segments,
 		Providers: providers,
@@ -68,7 +67,7 @@ func main() {
 		log.Fatalf("can not initialize NotificationsSender %v", err)
 	}
 
-	server, err := app.NewSender(app.SenderInput{Sender: sender})
+	server, err := app.NewWorker(app.WorkerInput{Sender: sender})
 	if err != nil {
 		log.Fatalf("can not initialize GRPCNotificationsSender %v", err)
 	}

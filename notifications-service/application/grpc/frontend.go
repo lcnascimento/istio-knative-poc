@@ -9,21 +9,21 @@ import (
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain"
 )
 
-// ServerInput ...
-type ServerInput struct {
+// FrontendInput ...
+type FrontendInput struct {
 	Repo     domain.NotificationsRepository
 	Enqueuer domain.NotificationsEnqueuer
 }
 
-// Server ...
-type Server struct {
-	in ServerInput
+// Frontend ...
+type Frontend struct {
+	in FrontendInput
 
 	pb.UnimplementedNotificationsServiceServer
 }
 
-// NewServer ...
-func NewServer(in ServerInput) (*Server, error) {
+// NewFrontend ...
+func NewFrontend(in FrontendInput) (*Frontend, error) {
 	if in.Repo == nil {
 		return nil, fmt.Errorf("Missing NotificationsRepository dependency")
 	}
@@ -32,11 +32,11 @@ func NewServer(in ServerInput) (*Server, error) {
 		return nil, fmt.Errorf("Missing NotificationsEnqueuer dependency")
 	}
 
-	return &Server{in: in}, nil
+	return &Frontend{in: in}, nil
 }
 
 // GetNotification ...
-func (s Server) GetNotification(ctx context.Context, in *pb.GetNotificationRequest) (*pb.GetNotificationResponse, error) {
+func (s Frontend) GetNotification(ctx context.Context, in *pb.GetNotificationRequest) (*pb.GetNotificationResponse, error) {
 	notif, err := s.in.Repo.GetNotification(ctx, in.NotificationId)
 	if err != nil {
 		log.Printf("could not get notification %s: %s", in.NotificationId, err.Error())
@@ -47,7 +47,7 @@ func (s Server) GetNotification(ctx context.Context, in *pb.GetNotificationReque
 }
 
 // ListNotifications ...
-func (s Server) ListNotifications(ctx context.Context, in *pb.ListNotificationsRequest) (*pb.ListNotificationsResponse, error) {
+func (s Frontend) ListNotifications(ctx context.Context, in *pb.ListNotificationsRequest) (*pb.ListNotificationsResponse, error) {
 	notifs, err := s.in.Repo.ListNotifications(ctx)
 	if err != nil {
 		log.Printf("could not list notifications: %s", err.Error())
@@ -63,7 +63,7 @@ func (s Server) ListNotifications(ctx context.Context, in *pb.ListNotificationsR
 }
 
 // EnqueueSendingNotification ...
-func (s Server) EnqueueSendingNotification(ctx context.Context, in *pb.SendNotificationRequest) (*pb.Void, error) {
+func (s Frontend) EnqueueSendingNotification(ctx context.Context, in *pb.SendNotificationRequest) (*pb.Void, error) {
 	if err := s.in.Enqueuer.EnqueueNotification(ctx, in.NotificationId); err != nil {
 		log.Printf("could not enqueue notification %s: %s", in.NotificationId, err.Error())
 		return nil, err
