@@ -13,37 +13,37 @@ import (
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion7
 
-// SegmentsServiceClient is the client API for SegmentsService service.
+// SegmentsServiceFrontendClient is the client API for SegmentsServiceFrontend service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type SegmentsServiceClient interface {
+type SegmentsServiceFrontendClient interface {
 	GetSegment(ctx context.Context, in *GetSegmentRequest, opts ...grpc.CallOption) (*GetSegmentResponse, error)
-	GetSegmentUsers(ctx context.Context, in *GetSegmentUsersRequest, opts ...grpc.CallOption) (SegmentsService_GetSegmentUsersClient, error)
+	GetSegmentUsers(ctx context.Context, in *GetSegmentUsersRequest, opts ...grpc.CallOption) (SegmentsServiceFrontend_GetSegmentUsersClient, error)
 }
 
-type segmentsServiceClient struct {
+type segmentsServiceFrontendClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewSegmentsServiceClient(cc grpc.ClientConnInterface) SegmentsServiceClient {
-	return &segmentsServiceClient{cc}
+func NewSegmentsServiceFrontendClient(cc grpc.ClientConnInterface) SegmentsServiceFrontendClient {
+	return &segmentsServiceFrontendClient{cc}
 }
 
-func (c *segmentsServiceClient) GetSegment(ctx context.Context, in *GetSegmentRequest, opts ...grpc.CallOption) (*GetSegmentResponse, error) {
+func (c *segmentsServiceFrontendClient) GetSegment(ctx context.Context, in *GetSegmentRequest, opts ...grpc.CallOption) (*GetSegmentResponse, error) {
 	out := new(GetSegmentResponse)
-	err := c.cc.Invoke(ctx, "/grpc.SegmentsService/GetSegment", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/grpc.SegmentsServiceFrontend/GetSegment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *segmentsServiceClient) GetSegmentUsers(ctx context.Context, in *GetSegmentUsersRequest, opts ...grpc.CallOption) (SegmentsService_GetSegmentUsersClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_SegmentsService_serviceDesc.Streams[0], "/grpc.SegmentsService/GetSegmentUsers", opts...)
+func (c *segmentsServiceFrontendClient) GetSegmentUsers(ctx context.Context, in *GetSegmentUsersRequest, opts ...grpc.CallOption) (SegmentsServiceFrontend_GetSegmentUsersClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_SegmentsServiceFrontend_serviceDesc.Streams[0], "/grpc.SegmentsServiceFrontend/GetSegmentUsers", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &segmentsServiceGetSegmentUsersClient{stream}
+	x := &segmentsServiceFrontendGetSegmentUsersClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -53,16 +53,16 @@ func (c *segmentsServiceClient) GetSegmentUsers(ctx context.Context, in *GetSegm
 	return x, nil
 }
 
-type SegmentsService_GetSegmentUsersClient interface {
+type SegmentsServiceFrontend_GetSegmentUsersClient interface {
 	Recv() (*GetSegmentUsersResponse, error)
 	grpc.ClientStream
 }
 
-type segmentsServiceGetSegmentUsersClient struct {
+type segmentsServiceFrontendGetSegmentUsersClient struct {
 	grpc.ClientStream
 }
 
-func (x *segmentsServiceGetSegmentUsersClient) Recv() (*GetSegmentUsersResponse, error) {
+func (x *segmentsServiceFrontendGetSegmentUsersClient) Recv() (*GetSegmentUsersResponse, error) {
 	m := new(GetSegmentUsersResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -70,90 +70,91 @@ func (x *segmentsServiceGetSegmentUsersClient) Recv() (*GetSegmentUsersResponse,
 	return m, nil
 }
 
-// SegmentsServiceServer is the server API for SegmentsService service.
-// All implementations must embed UnimplementedSegmentsServiceServer
+// SegmentsServiceFrontendServer is the server API for SegmentsServiceFrontend service.
+// All implementations must embed UnimplementedSegmentsServiceFrontendServer
 // for forward compatibility
-type SegmentsServiceServer interface {
+type SegmentsServiceFrontendServer interface {
 	GetSegment(context.Context, *GetSegmentRequest) (*GetSegmentResponse, error)
-	GetSegmentUsers(*GetSegmentUsersRequest, SegmentsService_GetSegmentUsersServer) error
-	mustEmbedUnimplementedSegmentsServiceServer()
+	GetSegmentUsers(*GetSegmentUsersRequest, SegmentsServiceFrontend_GetSegmentUsersServer) error
+	mustEmbedUnimplementedSegmentsServiceFrontendServer()
 }
 
-// UnimplementedSegmentsServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedSegmentsServiceServer struct {
+// UnimplementedSegmentsServiceFrontendServer must be embedded to have forward compatible implementations.
+type UnimplementedSegmentsServiceFrontendServer struct {
 }
 
-func (UnimplementedSegmentsServiceServer) GetSegment(context.Context, *GetSegmentRequest) (*GetSegmentResponse, error) {
+func (UnimplementedSegmentsServiceFrontendServer) GetSegment(context.Context, *GetSegmentRequest) (*GetSegmentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSegment not implemented")
 }
-func (UnimplementedSegmentsServiceServer) GetSegmentUsers(*GetSegmentUsersRequest, SegmentsService_GetSegmentUsersServer) error {
+func (UnimplementedSegmentsServiceFrontendServer) GetSegmentUsers(*GetSegmentUsersRequest, SegmentsServiceFrontend_GetSegmentUsersServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetSegmentUsers not implemented")
 }
-func (UnimplementedSegmentsServiceServer) mustEmbedUnimplementedSegmentsServiceServer() {}
+func (UnimplementedSegmentsServiceFrontendServer) mustEmbedUnimplementedSegmentsServiceFrontendServer() {
+}
 
-// UnsafeSegmentsServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to SegmentsServiceServer will
+// UnsafeSegmentsServiceFrontendServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to SegmentsServiceFrontendServer will
 // result in compilation errors.
-type UnsafeSegmentsServiceServer interface {
-	mustEmbedUnimplementedSegmentsServiceServer()
+type UnsafeSegmentsServiceFrontendServer interface {
+	mustEmbedUnimplementedSegmentsServiceFrontendServer()
 }
 
-func RegisterSegmentsServiceServer(s grpc.ServiceRegistrar, srv SegmentsServiceServer) {
-	s.RegisterService(&_SegmentsService_serviceDesc, srv)
+func RegisterSegmentsServiceFrontendServer(s grpc.ServiceRegistrar, srv SegmentsServiceFrontendServer) {
+	s.RegisterService(&_SegmentsServiceFrontend_serviceDesc, srv)
 }
 
-func _SegmentsService_GetSegment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SegmentsServiceFrontend_GetSegment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetSegmentRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SegmentsServiceServer).GetSegment(ctx, in)
+		return srv.(SegmentsServiceFrontendServer).GetSegment(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc.SegmentsService/GetSegment",
+		FullMethod: "/grpc.SegmentsServiceFrontend/GetSegment",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SegmentsServiceServer).GetSegment(ctx, req.(*GetSegmentRequest))
+		return srv.(SegmentsServiceFrontendServer).GetSegment(ctx, req.(*GetSegmentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SegmentsService_GetSegmentUsers_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _SegmentsServiceFrontend_GetSegmentUsers_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(GetSegmentUsersRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(SegmentsServiceServer).GetSegmentUsers(m, &segmentsServiceGetSegmentUsersServer{stream})
+	return srv.(SegmentsServiceFrontendServer).GetSegmentUsers(m, &segmentsServiceFrontendGetSegmentUsersServer{stream})
 }
 
-type SegmentsService_GetSegmentUsersServer interface {
+type SegmentsServiceFrontend_GetSegmentUsersServer interface {
 	Send(*GetSegmentUsersResponse) error
 	grpc.ServerStream
 }
 
-type segmentsServiceGetSegmentUsersServer struct {
+type segmentsServiceFrontendGetSegmentUsersServer struct {
 	grpc.ServerStream
 }
 
-func (x *segmentsServiceGetSegmentUsersServer) Send(m *GetSegmentUsersResponse) error {
+func (x *segmentsServiceFrontendGetSegmentUsersServer) Send(m *GetSegmentUsersResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-var _SegmentsService_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "grpc.SegmentsService",
-	HandlerType: (*SegmentsServiceServer)(nil),
+var _SegmentsServiceFrontend_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "grpc.SegmentsServiceFrontend",
+	HandlerType: (*SegmentsServiceFrontendServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetSegment",
-			Handler:    _SegmentsService_GetSegment_Handler,
+			Handler:    _SegmentsServiceFrontend_GetSegment_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "GetSegmentUsers",
-			Handler:       _SegmentsService_GetSegmentUsers_Handler,
+			Handler:       _SegmentsServiceFrontend_GetSegmentUsers_Handler,
 			ServerStreams: true,
 		},
 	},

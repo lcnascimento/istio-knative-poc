@@ -20,7 +20,7 @@ type ServiceInput struct {
 type Service struct {
 	in ServiceInput
 
-	cli pb.SegmentsServiceClient
+	cli pb.SegmentsServiceFrontendClient
 }
 
 // NewService ...
@@ -35,7 +35,7 @@ func (s *Service) Connect() error {
 		return err
 	}
 
-	s.cli = pb.NewSegmentsServiceClient(conn)
+	s.cli = pb.NewSegmentsServiceFrontendClient(conn)
 
 	return nil
 }

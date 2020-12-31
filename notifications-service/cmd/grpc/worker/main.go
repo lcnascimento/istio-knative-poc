@@ -67,7 +67,7 @@ func main() {
 		log.Fatalf("can not initialize NotificationsSender %v", err)
 	}
 
-	server, err := app.NewWorker(app.WorkerInput{Sender: sender})
+	worker, err := app.NewWorker(app.WorkerInput{Sender: sender})
 	if err != nil {
 		log.Fatalf("can not initialize GRPCNotificationsSender %v", err)
 	}
@@ -78,7 +78,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterNotificationsSenderServiceServer(s, server)
+	pb.RegisterNotificationsServiceWorkerServer(s, worker)
 
 	log.Println("gRPC server started")
 	if err := s.Serve(lis); err != nil {

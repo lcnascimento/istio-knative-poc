@@ -19,7 +19,7 @@ func main2() {
 		log.Fatalf("can not connect with server %v", err)
 	}
 
-	cli := pb.NewNotificationsServiceClient(conn)
+	cli := pb.NewNotificationsServiceFrontendClient(conn)
 
 	res, err := cli.ListNotifications(ctx, &pb.ListNotificationsRequest{})
 	if err != nil {
@@ -37,7 +37,7 @@ func main() {
 		log.Fatalf("can not connect with server %v", err)
 	}
 
-	cli := pb.NewNotificationsSenderServiceClient(conn)
+	cli := pb.NewNotificationsServiceWorkerClient(conn)
 
 	_, err = cli.SendNotification(ctx, &pb.SendNotificationRequest{NotificationId: "2"})
 	if err != nil {

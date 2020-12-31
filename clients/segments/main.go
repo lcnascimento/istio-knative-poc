@@ -20,7 +20,7 @@ func main() {
 		log.Fatalf("can not connect with server %v", err)
 	}
 
-	cli := pb.NewSegmentsServiceClient(conn)
+	cli := pb.NewSegmentsServiceFrontendClient(conn)
 
 	stream, err := cli.GetSegmentUsers(ctx, &pb.GetSegmentUsersRequest{
 		SegmentId: "1",

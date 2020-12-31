@@ -4,7 +4,7 @@ option go_package = "github.com/lcnascimento/istio-knative-poc/segments-service/
 
 package grpc;
 
-service SegmentsService {
+service SegmentsServiceFrontend {
 	rpc GetSegment(GetSegmentRequest) returns (GetSegmentResponse);
   rpc GetSegmentUsers (GetSegmentUsersRequest) returns (stream GetSegmentUsersResponse);
 }

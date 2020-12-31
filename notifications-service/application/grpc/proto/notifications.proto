@@ -4,13 +4,13 @@ option go_package = "github.com/lcnascimento/istio-knative-poc/notifications-ser
 
 package grpc;
 
-service NotificationsService {
+service NotificationsServiceFrontend {
   rpc GetNotification(GetNotificationRequest) returns (GetNotificationResponse);
   rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
   rpc EnqueueSendingNotification(SendNotificationRequest) returns (Void);
 }
 
-service NotificationsSenderService {
+service NotificationsServiceWorker {
   rpc SendNotification(SendNotificationRequest) returns (Void);
 }
 

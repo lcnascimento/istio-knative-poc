@@ -30,7 +30,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterSegmentsServiceServer(s, app.NewFrontend(app.FrontendInput{Repo: repo}))
+	pb.RegisterSegmentsServiceFrontendServer(s, app.NewFrontend(app.FrontendInput{Repo: repo}))
 
 	log.Println("gRPC server started")
 	if err := s.Serve(lis); err != nil {

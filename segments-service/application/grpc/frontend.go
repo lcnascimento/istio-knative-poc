@@ -18,7 +18,7 @@ type FrontendInput struct {
 type Frontend struct {
 	in FrontendInput
 
-	pb.UnimplementedSegmentsServiceServer
+	pb.UnimplementedSegmentsServiceFrontendServer
 }
 
 // NewFrontend ...
@@ -37,7 +37,7 @@ func (s Frontend) GetSegment(ctx context.Context, in *pb.GetSegmentRequest) (*pb
 }
 
 // GetSegmentUsers ...
-func (s Frontend) GetSegmentUsers(in *pb.GetSegmentUsersRequest, srv pb.SegmentsService_GetSegmentUsersServer) error {
+func (s Frontend) GetSegmentUsers(in *pb.GetSegmentUsersRequest, srv pb.SegmentsServiceFrontend_GetSegmentUsersServer) error {
 	ctx, done := context.WithCancel(srv.Context())
 	defer done()
 

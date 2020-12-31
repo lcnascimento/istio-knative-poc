@@ -18,7 +18,7 @@ type WorkerInput struct {
 type Worker struct {
 	in WorkerInput
 
-	pb.UnimplementedNotificationsSenderServiceServer
+	pb.UnimplementedNotificationsServiceWorkerServer
 }
 
 // NewWorker ...

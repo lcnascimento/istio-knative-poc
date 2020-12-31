@@ -19,7 +19,7 @@ type FrontendInput struct {
 type Frontend struct {
 	in FrontendInput
 
-	pb.UnimplementedNotificationsServiceServer
+	pb.UnimplementedNotificationsServiceFrontendServer
 }
 
 // NewFrontend ...

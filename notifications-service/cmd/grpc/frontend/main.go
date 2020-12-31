@@ -31,7 +31,7 @@ func main() {
 		log.Fatalf("can not initialize NotificationsRepository %v", err)
 	}
 
-	server, err := app.NewFrontend(app.FrontendInput{
+	frontend, err := app.NewFrontend(app.FrontendInput{
 		Repo:     repo,
 		Enqueuer: enqueuer,
 	})
@@ -40,7 +40,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	pb.RegisterNotificationsServiceServer(s, server)
+	pb.RegisterNotificationsServiceFrontendServer(s, frontend)
 
 	log.Println("gRPC server started")
 	if err := s.Serve(lis); err != nil {
