@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+option go_package = "github.com/lcnascimento/istio-knative-poc/exports-service/application/grpc/proto";
+
+package grpc;
+
+service ExportsServiceFrontend {
+  rpc GetExport(GetExportRequest) returns (GetExportResponse);
+  rpc ListExports(ListExportsRequest) returns (ListExportsResponse);
+  rpc EnqueueExport(EnqueueExportRequest) returns (Void);
+}
+
+service ExportsServiceWorker {
+  rpc ProcessExport(ProcessExportRequest) returns (Void);
+}
+
+message GetExportRequest {
+  string export_id = 1;
+}
+
+message GetExportResponse {
+  Export export = 1;
+}
+
+message ListExportsRequest {
+}
+
+message ListExportsResponse {
+  repeated Export exports = 1;
+}
+
+message EnqueueExportRequest {
+  string export_id = 1;
+}
+
+message ProcessExportRequest {
+  string export_id = 1;
+}
+
+message Export {
+  string id         = 1;
+  string app_key    = 2;
+  string segment_id = 3;
+  string name       = 4;
+  string module     = 5;
+}
+
+message Void {
+}
