@@ -2,7 +2,9 @@ package segmentsrepo
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/lcnascimento/istio-knative-poc/segments-service/domain"
@@ -30,12 +32,35 @@ func NewRepository(in RepositoryInput) (*Repository, error) {
 
 // FindSegment ...
 func (r Repository) FindSegment(ctx context.Context, id string) (*domain.Segment, error) {
-	return nil, domain.ErrNotImplemented
+	segments, err := r.ListSegments(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, segment := range segments {
+		if segment.ID == id {
+			return segment, nil
+		}
+	}
+
+	return nil, domain.ErrEntityNotFound
 }
 
 // ListSegments ...
 func (r Repository) ListSegments(ctx context.Context) ([]*domain.Segment, error) {
-	return nil, domain.ErrNotImplemented
+	file, err := os.Open("config/segments.json")
+	if err != nil {
+		return nil, err
+	}
+
+	segments := []*domain.Segment{}
+
+	parser := json.NewDecoder(file)
+	if err := parser.Decode(&segments); err != nil {
+		return nil, err
+	}
+
+	return segments, nil
 }
 
 // GetSegmentUsers ...
