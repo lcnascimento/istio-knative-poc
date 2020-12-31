@@ -9,6 +9,7 @@ import (
 
 	app "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc"
 	pb "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc/proto"
+	repo "github.com/lcnascimento/istio-knative-poc/segments-service/domain/segmentsrepo"
 )
 
 const address = "localhost:8083"
@@ -19,8 +20,16 @@ func main() {
 		log.Fatalf("can not initialize server %v", err)
 	}
 
+	repo, err := repo.NewRepository(repo.RepositoryInput{
+		NetworkDelay:            time.Second * 2,
+		NumberOfUsersInSegments: 10,
+	})
+	if err != nil {
+		log.Fatalf("could not initialize SegmentsRepository: %v", err)
+	}
+
 	s := grpc.NewServer()
-	pb.RegisterSegmentsServiceServer(s, app.NewServer(app.ServerInput{NetworkSimulationTimeout: time.Second}))
+	pb.RegisterSegmentsServiceServer(s, app.NewServer(app.ServerInput{Repo: repo}))
 
 	log.Println("gRPC server started")
 	if err := s.Serve(lis); err != nil {

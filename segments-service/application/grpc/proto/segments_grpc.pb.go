@@ -17,6 +17,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SegmentsServiceClient interface {
+	GetSegment(ctx context.Context, in *GetSegmentRequest, opts ...grpc.CallOption) (*GetSegmentResponse, error)
 	GetSegmentUsers(ctx context.Context, in *GetSegmentUsersRequest, opts ...grpc.CallOption) (SegmentsService_GetSegmentUsersClient, error)
 }
 
@@ -28,8 +29,17 @@ func NewSegmentsServiceClient(cc grpc.ClientConnInterface) SegmentsServiceClient
 	return &segmentsServiceClient{cc}
 }
 
+func (c *segmentsServiceClient) GetSegment(ctx context.Context, in *GetSegmentRequest, opts ...grpc.CallOption) (*GetSegmentResponse, error) {
+	out := new(GetSegmentResponse)
+	err := c.cc.Invoke(ctx, "/grpc.SegmentsService/GetSegment", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *segmentsServiceClient) GetSegmentUsers(ctx context.Context, in *GetSegmentUsersRequest, opts ...grpc.CallOption) (SegmentsService_GetSegmentUsersClient, error) {
-	stream, err := c.cc.NewStream(ctx, &SegmentsService_ServiceDesc.Streams[0], "/grpc.SegmentsService/GetSegmentUsers", opts...)
+	stream, err := c.cc.NewStream(ctx, &_SegmentsService_serviceDesc.Streams[0], "/grpc.SegmentsService/GetSegmentUsers", opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,6 +74,7 @@ func (x *segmentsServiceGetSegmentUsersClient) Recv() (*GetSegmentUsersResponse,
 // All implementations must embed UnimplementedSegmentsServiceServer
 // for forward compatibility
 type SegmentsServiceServer interface {
+	GetSegment(context.Context, *GetSegmentRequest) (*GetSegmentResponse, error)
 	GetSegmentUsers(*GetSegmentUsersRequest, SegmentsService_GetSegmentUsersServer) error
 	mustEmbedUnimplementedSegmentsServiceServer()
 }
@@ -72,6 +83,9 @@ type SegmentsServiceServer interface {
 type UnimplementedSegmentsServiceServer struct {
 }
 
+func (UnimplementedSegmentsServiceServer) GetSegment(context.Context, *GetSegmentRequest) (*GetSegmentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSegment not implemented")
+}
 func (UnimplementedSegmentsServiceServer) GetSegmentUsers(*GetSegmentUsersRequest, SegmentsService_GetSegmentUsersServer) error {
 	return status.Errorf(codes.Unimplemented, "method GetSegmentUsers not implemented")
 }
@@ -85,7 +99,25 @@ type UnsafeSegmentsServiceServer interface {
 }
 
 func RegisterSegmentsServiceServer(s grpc.ServiceRegistrar, srv SegmentsServiceServer) {
-	s.RegisterService(&SegmentsService_ServiceDesc, srv)
+	s.RegisterService(&_SegmentsService_serviceDesc, srv)
+}
+
+func _SegmentsService_GetSegment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSegmentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SegmentsServiceServer).GetSegment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.SegmentsService/GetSegment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SegmentsServiceServer).GetSegment(ctx, req.(*GetSegmentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _SegmentsService_GetSegmentUsers_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -109,13 +141,15 @@ func (x *segmentsServiceGetSegmentUsersServer) Send(m *GetSegmentUsersResponse) 
 	return x.ServerStream.SendMsg(m)
 }
 
-// SegmentsService_ServiceDesc is the grpc.ServiceDesc for SegmentsService service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var SegmentsService_ServiceDesc = grpc.ServiceDesc{
+var _SegmentsService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "grpc.SegmentsService",
 	HandlerType: (*SegmentsServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetSegment",
+			Handler:    _SegmentsService_GetSegment_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "GetSegmentUsers",

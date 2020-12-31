@@ -23,8 +23,8 @@ func main() {
 	cli := pb.NewSegmentsServiceClient(conn)
 
 	stream, err := cli.GetSegmentUsers(ctx, &pb.GetSegmentUsersRequest{
-		SegmentId: 1,
-		Size:      3,
+		SegmentId: "1",
+		Size:      1,
 	})
 	if err != nil {
 		log.Fatalf("could not create GetSegmentUsers stream %v", err)

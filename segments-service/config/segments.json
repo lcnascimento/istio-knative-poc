@@ -1,0 +1,34 @@
+[
+  {
+    "id": "1",
+    "app_key": "AppKey 1",
+    "name": "Segment 1",
+    "description": "First segment from AppKey 1",
+    "rules": [],
+    "version": 1
+  },
+  {
+    "id": "2",
+    "app_key": "AppKey 1",
+    "name": "Segment 2",
+    "description": "Second segment from AppKey 1",
+    "rules": [],
+    "version": 3
+  },
+  {
+    "id": "3",
+    "app_key": "AppKey 2",
+    "name": "Segment 1",
+    "description": "First segment from AppKey 2",
+    "rules": [],
+    "version": 5
+  },
+  {
+    "id": "4",
+    "app_key": "AppKey 3",
+    "name": "Segment 2",
+    "description": "Second segment from AppKey 3",
+    "rules": [],
+    "version": 22
+  }
+]

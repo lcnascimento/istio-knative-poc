@@ -5,16 +5,31 @@ option go_package = "github.com/lcnascimento/istio-knative-poc/segments-service/
 package grpc;
 
 service SegmentsService {
-  rpc GetSegmentUsers (GetSegmentUsersRequest) returns (stream GetSegmentUsersResponse) {}
+	rpc GetSegment(GetSegmentRequest) returns (GetSegmentResponse);
+  rpc GetSegmentUsers (GetSegmentUsersRequest) returns (stream GetSegmentUsersResponse);
 }
 
-// The request message containing the user's name.
+message GetSegmentRequest {
+	string segment_id = 1;
+}
+
+message GetSegmentResponse {
+	Segment segment = 1;
+}
+
+message Segment {
+	string 	id 						= 1;
+	string 	app_key 			= 2;
+	string 	name					= 3;
+	string 	description		= 4;
+	int32 	version				= 5;
+}
+
 message GetSegmentUsersRequest {
-  int32  segment_id  = 1;
+  string  segment_id  = 1;
   int32  size        = 2;
 }
 
-// The response message containing the greetings
 message GetSegmentUsersResponse {
   repeated User data = 1;
 
@@ -22,10 +37,8 @@ message GetSegmentUsersResponse {
 }
 
 message User {
-	string  id        = 1;
+	string  reference = 1;
 	string  app_key   = 2;
-	string  reference = 3;
-	string  name      = 4;
-	string  email     = 5;
-	string  gender    = 6;
+	string  name      = 3;
+	string  email     = 4;
 }
