@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option go_package = "github.com/lcnascimento/istio-knative-poc/notifications-service/grpc_protobuf";
+
+package grpc;
+
+service NotificationsService {
+  rpc GetNotification(GetNotificationRequest) returns (GetNotificationResponse);
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse);
+  rpc SendNotification(SendNotificationRequest) returns (Void);
+}
+
+message ListNotificationsRequest {
+  NotificationsFilter filter = 1;
+
+  int32 offset    = 2;
+  int32 page_size = 3;
+}
+
+message ListNotificationsResponse {
+  repeated Notification data = 1;
+
+  int32 total = 2;
+}
+
+message GetNotificationRequest {
+  string notification_id = 1;
+}
+
+message GetNotificationResponse {
+  Notification notification = 1;
+}
+
+message SendNotificationRequest {
+  string notification_id = 1; 
+}
+
+message Void {}
+
+message Notification {
+  string id       = 1;
+  string name     = 2;
+  string app_key  = 3;
+  string channel  = 4;
+}
+
+message NotificationsFilter {
+  string app_key = 1;
+  string channel = 2;
+}
