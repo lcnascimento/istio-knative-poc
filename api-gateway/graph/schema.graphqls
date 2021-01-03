@@ -1,0 +1,71 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Export {
+  id: ID!
+  appKey: String!
+  segment: Segment!
+  name: String!
+  module: ExportModule!
+  status: JobStatus!
+}
+
+enum ExportModule {
+  USERS
+  ADS
+}
+
+enum JobStatus {
+  CREATED
+  RUNNING
+  FAILED
+  DONE
+}
+
+type Notification {
+  id: ID!
+  appKey: String!
+  segment: Segment!
+  name: String!
+  channel: NotificationChannel!
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  BROWSER
+}
+
+type Segment {
+  id: ID!
+  appKey: String!
+  name: String!
+  description: String
+  version: Int!
+}
+
+#################
+
+type Query {
+  exports: [Export!]!
+  export(id: ID!): Export!
+  notifications: [Notification!]!
+  notification(id: ID!): Notification!
+  segments: [Segment!]!
+  segment(id: ID!): Segment!
+}
+
+type Mutation {
+  sendNotification(notificationId: ID!): Void
+  createExport(input: NewExport!): Export!
+}
+
+scalar Void
+
+input NewExport {
+  appKey: String!
+  segmentId: ID!
+  name: String!
+  module: ExportModule!
+}

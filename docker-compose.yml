@@ -1,0 +1,95 @@
+version: '3.5'
+services:
+  api_gateway:
+    image: golang:1.14
+    working_dir: /go/src/github.com/lcnascimento/istio-knative-poc/api-gateway
+    command: go run server.go
+    env_file: 
+      - api-gateway/config/.env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
+      - ./api-gateway:/go/src/github.com/lcnascimento/istio-knative-poc/api-gateway
+      - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
+      - ./notifications-service:/go/src/github.com/lcnascimento/istio-knative-poc/notifications-service
+      - ./exports-service:/go/src/github.com/lcnascimento/istio-knative-poc/exports-service
+      - "api-gateway-pkgs:/go"
+    depends_on:
+      - segments_service_frontend
+      - notifications_service_frontend
+      # - exports_service_frontend
+    container_name: api_gateway
+
+  segments_service_frontend:
+    image: golang:1.14
+    working_dir: /go/src/github.com/lcnascimento/istio-knative-poc/segments-service
+    command: go run cmd/grpc/frontend/main.go
+    env_file: 
+      - segments-service/config/.env
+    volumes:
+      - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
+      - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
+      - "segments-service-frontend-pkgs:/go"
+    container_name: segments_service_frontend
+
+  notifications_service_frontend:
+    image: golang:1.14
+    working_dir: /go/src/github.com/lcnascimento/istio-knative-poc/notifications-service
+    command: go run cmd/grpc/frontend/main.go
+    env_file: 
+      - notifications-service/config/.env
+    volumes:
+      - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
+      - ./notifications-service:/go/src/github.com/lcnascimento/istio-knative-poc/notifications-service
+      - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
+      - "notifications-service-frontend-pkgs:/go"
+    container_name: notifications_service_frontend
+
+  notifications_service_worker:
+    image: golang:1.14
+    working_dir: /go/src/github.com/lcnascimento/istio-knative-poc/notifications-service
+    command: go run cmd/grpc/worker/main.go
+    env_file: 
+      - notifications-service/config/.env
+    volumes:
+      - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
+      - ./notifications-service:/go/src/github.com/lcnascimento/istio-knative-poc/notifications-service
+      - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
+      - "notifications-service-worker-pkgs:/go"
+    container_name: notifications_service_worker
+
+  exports_service_frontend:
+    image: golang:1.14
+    working_dir: /go/src/github.com/lcnascimento/istio-knative-poc/exports-service
+    command: go run cmd/grpc/frontend/main.go
+    env_file: 
+      - exports-service/config/.env
+    volumes:
+      - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
+      - ./exports-service:/go/src/github.com/lcnascimento/istio-knative-poc/exports-service
+      - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
+      - "exports-service-frontend-pkgs:/go"
+    container_name: exports_service_frontend
+
+  exports_service_worker:
+    image: golang:1.14
+    working_dir: /go/src/github.com/lcnascimento/istio-knative-poc/exports-service
+    command: go run cmd/grpc/worker/main.go
+    env_file: 
+      - exports-service/config/.env
+    volumes:
+      - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
+      - ./exports-service:/go/src/github.com/lcnascimento/istio-knative-poc/exports-service
+      - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
+      - "exports-service-worker-pkgs:/go"
+    container_name: exports_service_worker
+
+volumes:
+  api-gateway-pkgs:
+  segments-service-frontend-pkgs:
+  notifications-service-frontend-pkgs:
+  notifications-service-worker-pkgs:
+  exports-service-frontend-pkgs:
+  exports-service-worker-pkgs:
+    

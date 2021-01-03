@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 
 	"google.golang.org/grpc"
+
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/env"
 
 	app "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc"
 	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
@@ -13,14 +16,7 @@ import (
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain/repository"
 )
 
-const address = "localhost:8084"
-
 func main() {
-	lis, err := net.Listen("tcp", address)
-	if err != nil {
-		log.Fatalf("can not initialize gRPC server %v", err)
-	}
-
 	enqueuer, err := enqueuer.NewService(enqueuer.ServiceInput{})
 	if err != nil {
 		log.Fatalf("can not initialize NotificationsEnqueuer %v", err)
@@ -37,6 +33,11 @@ func main() {
 	})
 	if err != nil {
 		log.Fatalf("can not initialize server %v", err)
+	}
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", env.MustGetInt("PORT")))
+	if err != nil {
+		log.Fatalf("can not initialize gRPC server %v", err)
 	}
 
 	s := grpc.NewServer()

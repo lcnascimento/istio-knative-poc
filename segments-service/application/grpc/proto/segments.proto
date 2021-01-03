@@ -6,6 +6,7 @@ package grpc;
 
 service SegmentsServiceFrontend {
 	rpc GetSegment(GetSegmentRequest) returns (GetSegmentResponse);
+	rpc ListSegments(ListSegmentsRequest) returns (ListSegmentsResponse);
   rpc GetSegmentUsers (GetSegmentUsersRequest) returns (stream GetSegmentUsersResponse);
 }
 
@@ -15,6 +16,13 @@ message GetSegmentRequest {
 
 message GetSegmentResponse {
 	Segment segment = 1;
+}
+
+message ListSegmentsRequest {
+}
+
+message ListSegmentsResponse {
+	repeated Segment segments = 1;
 }
 
 message Segment {

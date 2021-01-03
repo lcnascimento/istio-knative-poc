@@ -32,7 +32,7 @@ func (u *User) FillByGRPCDTO(dto *pb.User) {
 type Segment struct {
 	ID          string      `json:"id"`
 	AppKey      string      `json:"app_key"`
-	Name        string      `json:"json"`
+	Name        string      `json:"name"`
 	Description string      `json:"description"`
 	Rules       interface{} `json:"rules"`
 	Version     int         `json:"version"`

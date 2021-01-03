@@ -36,6 +36,21 @@ func (s Frontend) GetSegment(ctx context.Context, in *pb.GetSegmentRequest) (*pb
 	return &pb.GetSegmentResponse{Segment: segment.ToGRPCDTO()}, nil
 }
 
+// ListSegments ...
+func (s Frontend) ListSegments(ctx context.Context, in *pb.ListSegmentsRequest) (*pb.ListSegmentsResponse, error) {
+	segments, err := s.in.Repo.ListSegments(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	res := []*pb.Segment{}
+	for _, seg := range segments {
+		res = append(res, seg.ToGRPCDTO())
+	}
+
+	return &pb.ListSegmentsResponse{Segments: res}, nil
+}
+
 // GetSegmentUsers ...
 func (s Frontend) GetSegmentUsers(in *pb.GetSegmentUsersRequest, srv pb.SegmentsServiceFrontend_GetSegmentUsersServer) error {
 	ctx, done := context.WithCancel(srv.Context())

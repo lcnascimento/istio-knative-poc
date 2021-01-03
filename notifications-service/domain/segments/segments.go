@@ -14,6 +14,7 @@ import (
 // ServiceInput ...
 type ServiceInput struct {
 	ServerAddress string
+	BulkSize      int
 }
 
 // Service ...
@@ -54,7 +55,10 @@ func (s Service) GetSegmentUsers(ctx context.Context, id string) (chan []*domain
 			return
 		}
 
-		stream, err := s.cli.GetSegmentUsers(ctx, &pb.GetSegmentUsersRequest{SegmentId: id, Size: 1})
+		stream, err := s.cli.GetSegmentUsers(ctx, &pb.GetSegmentUsersRequest{
+			SegmentId: id,
+			Size:      int32(s.in.BulkSize),
+		})
 		if err != nil {
 			errCh <- err
 			return

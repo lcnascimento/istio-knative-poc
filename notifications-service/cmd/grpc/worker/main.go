@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
 
 	"google.golang.org/grpc"
+
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/env"
 
 	app "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc"
 	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
@@ -18,16 +21,20 @@ import (
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain/sendgrid"
 )
 
-const address = "localhost:8084"
-
 func main() {
 	repo, err := repository.NewService(repository.ServiceInput{})
 	if err != nil {
 		log.Fatalf("can not initialize NotificationsRepository %v", err)
 	}
 
+	segmentsAddress := fmt.Sprintf(
+		"%s:%d",
+		env.MustGetString("SEGMENTS_SERVICE_SERVER_HOST"),
+		env.MustGetInt("SEGMENTS_SERVICE_SERVER_PORT"),
+	)
 	segments, err := segments.NewService(segments.ServiceInput{
-		ServerAddress: "localhost:8083",
+		ServerAddress: segmentsAddress,
+		BulkSize:      env.MustGetInt("SEGMENTS_SERVICE_BULK_SIZE"),
 	})
 	if err != nil {
 		log.Fatalf("can not initialize SegmentsService %v", err)
@@ -72,7 +79,7 @@ func main() {
 		log.Fatalf("can not initialize GRPCNotificationsSender %v", err)
 	}
 
-	lis, err := net.Listen("tcp", address)
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", env.MustGetInt("PORT")))
 	if err != nil {
 		log.Fatalf("can not initialize gRPC server %v", err)
 	}
