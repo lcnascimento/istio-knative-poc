@@ -10,12 +10,20 @@ import (
 	"github.com/lcnascimento/istio-knative-poc/api-gateway/graph/model"
 )
 
+func (r *exportResolver) Segment(ctx context.Context, obj *model.Export) (*model.Segment, error) {
+	return r.SegmentsService.GetSegment(ctx, obj.Segment.ID)
+}
+
 func (r *mutationResolver) SendNotification(ctx context.Context, notificationID string) (*string, error) {
 	return nil, r.NotificationsService.SendNotification(ctx, notificationID)
 }
 
 func (r *mutationResolver) CreateExport(ctx context.Context, input model.NewExport) (*model.Export, error) {
 	return r.ExportsService.CreateExport(ctx, input)
+}
+
+func (r *notificationResolver) Segment(ctx context.Context, obj *model.Notification) (*model.Segment, error) {
+	return r.SegmentsService.GetSegment(ctx, obj.Segment.ID)
 }
 
 func (r *queryResolver) Exports(ctx context.Context) ([]*model.Export, error) {
@@ -42,11 +50,19 @@ func (r *queryResolver) Segment(ctx context.Context, id string) (*model.Segment,
 	return r.SegmentsService.GetSegment(ctx, id)
 }
 
+// Export returns generated.ExportResolver implementation.
+func (r *Resolver) Export() generated.ExportResolver { return &exportResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
+// Notification returns generated.NotificationResolver implementation.
+func (r *Resolver) Notification() generated.NotificationResolver { return &notificationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type exportResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+type notificationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

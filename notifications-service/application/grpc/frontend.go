@@ -6,6 +6,8 @@ import (
 	"log"
 
 	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain"
 )
 
@@ -59,15 +61,15 @@ func (s Frontend) ListNotifications(ctx context.Context, in *pb.ListNotification
 		response = append(response, notif.ToGRPCDTO())
 	}
 
-	return &pb.ListNotificationsResponse{Data: response}, nil
+	return &pb.ListNotificationsResponse{Notifications: response}, nil
 }
 
 // EnqueueSendingNotification ...
-func (s Frontend) EnqueueSendingNotification(ctx context.Context, in *pb.SendNotificationRequest) (*pb.Void, error) {
+func (s Frontend) EnqueueSendingNotification(ctx context.Context, in *pb.SendNotificationRequest) (*wrapperspb.BoolValue, error) {
 	if err := s.in.Enqueuer.EnqueueNotification(ctx, in.NotificationId); err != nil {
 		log.Printf("could not enqueue notification %s: %s", in.NotificationId, err.Error())
-		return nil, err
+		return wrapperspb.Bool(false), err
 	}
 
-	return &pb.Void{}, nil
+	return wrapperspb.Bool(true), nil
 }

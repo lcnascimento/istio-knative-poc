@@ -89,13 +89,27 @@ func (s Service) CreateExport(ctx context.Context, in model.NewExport) (*model.E
 	return nil, services.ErrNotImplemented
 }
 
+var dtoToModelModule = map[pb.ExportModule]model.ExportModule{
+	pb.ExportModule_USERS: model.ExportModuleUsers,
+	pb.ExportModule_ADS:   model.ExportModuleAds,
+}
+
+var dtoToModelStatus = map[pb.ExportStatus]model.JobStatus{
+	pb.ExportStatus_CREATED: model.JobStatusCreated,
+	pb.ExportStatus_RUNNING: model.JobStatusRunning,
+	pb.ExportStatus_FAILED:  model.JobStatusFailed,
+	pb.ExportStatus_DONE:    model.JobStatusDone,
+}
+
 func translate(dto *pb.Export) *model.Export {
 	return &model.Export{
 		ID:     dto.Id,
 		AppKey: dto.AppKey,
 		Name:   dto.Name,
-		// Module: dto.Module,
-		// Segment: ,
-		// Status: ,
+		Module: dtoToModelModule[dto.Module],
+		Status: dtoToModelStatus[dto.Status],
+		Segment: &model.Segment{
+			ID: dto.SegmentId,
+		},
 	}
 }

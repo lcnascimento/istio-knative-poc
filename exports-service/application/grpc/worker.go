@@ -6,6 +6,7 @@ import (
 	"log"
 
 	pb "github.com/lcnascimento/istio-knative-poc/exports-service/application/grpc/proto"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/lcnascimento/istio-knative-poc/exports-service/domain"
 )
@@ -32,11 +33,11 @@ func NewWorker(in WorkerInput) (*Worker, error) {
 }
 
 // ProcessExport ...
-func (w Worker) ProcessExport(ctx context.Context, in *pb.ProcessExportRequest) (*pb.Void, error) {
+func (w Worker) ProcessExport(ctx context.Context, in *pb.ProcessExportRequest) (*wrapperspb.BoolValue, error) {
 	if err := w.in.Exportator.Export(ctx, in.ExportId); err != nil {
 		log.Printf("Could not process exportation %s: %s", in.ExportId, err.Error())
-		return nil, err
+		return wrapperspb.Bool(false), err
 	}
 
-	return &pb.Void{}, nil
+	return wrapperspb.Bool(true), nil
 }

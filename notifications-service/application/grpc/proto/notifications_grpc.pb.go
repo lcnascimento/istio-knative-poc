@@ -7,6 +7,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type NotificationsServiceFrontendClient interface {
 	GetNotification(ctx context.Context, in *GetNotificationRequest, opts ...grpc.CallOption) (*GetNotificationResponse, error)
 	ListNotifications(ctx context.Context, in *ListNotificationsRequest, opts ...grpc.CallOption) (*ListNotificationsResponse, error)
-	EnqueueSendingNotification(ctx context.Context, in *SendNotificationRequest, opts ...grpc.CallOption) (*Void, error)
+	EnqueueSendingNotification(ctx context.Context, in *SendNotificationRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
 }
 
 type notificationsServiceFrontendClient struct {
@@ -48,8 +49,8 @@ func (c *notificationsServiceFrontendClient) ListNotifications(ctx context.Conte
 	return out, nil
 }
 
-func (c *notificationsServiceFrontendClient) EnqueueSendingNotification(ctx context.Context, in *SendNotificationRequest, opts ...grpc.CallOption) (*Void, error) {
-	out := new(Void)
+func (c *notificationsServiceFrontendClient) EnqueueSendingNotification(ctx context.Context, in *SendNotificationRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error) {
+	out := new(wrapperspb.BoolValue)
 	err := c.cc.Invoke(ctx, "/grpc.NotificationsServiceFrontend/EnqueueSendingNotification", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -63,7 +64,7 @@ func (c *notificationsServiceFrontendClient) EnqueueSendingNotification(ctx cont
 type NotificationsServiceFrontendServer interface {
 	GetNotification(context.Context, *GetNotificationRequest) (*GetNotificationResponse, error)
 	ListNotifications(context.Context, *ListNotificationsRequest) (*ListNotificationsResponse, error)
-	EnqueueSendingNotification(context.Context, *SendNotificationRequest) (*Void, error)
+	EnqueueSendingNotification(context.Context, *SendNotificationRequest) (*wrapperspb.BoolValue, error)
 	mustEmbedUnimplementedNotificationsServiceFrontendServer()
 }
 
@@ -77,7 +78,7 @@ func (UnimplementedNotificationsServiceFrontendServer) GetNotification(context.C
 func (UnimplementedNotificationsServiceFrontendServer) ListNotifications(context.Context, *ListNotificationsRequest) (*ListNotificationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListNotifications not implemented")
 }
-func (UnimplementedNotificationsServiceFrontendServer) EnqueueSendingNotification(context.Context, *SendNotificationRequest) (*Void, error) {
+func (UnimplementedNotificationsServiceFrontendServer) EnqueueSendingNotification(context.Context, *SendNotificationRequest) (*wrapperspb.BoolValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EnqueueSendingNotification not implemented")
 }
 func (UnimplementedNotificationsServiceFrontendServer) mustEmbedUnimplementedNotificationsServiceFrontendServer() {
@@ -173,7 +174,7 @@ var _NotificationsServiceFrontend_serviceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type NotificationsServiceWorkerClient interface {
-	SendNotification(ctx context.Context, in *SendNotificationRequest, opts ...grpc.CallOption) (*Void, error)
+	SendNotification(ctx context.Context, in *SendNotificationRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
 }
 
 type notificationsServiceWorkerClient struct {
@@ -184,8 +185,8 @@ func NewNotificationsServiceWorkerClient(cc grpc.ClientConnInterface) Notificati
 	return &notificationsServiceWorkerClient{cc}
 }
 
-func (c *notificationsServiceWorkerClient) SendNotification(ctx context.Context, in *SendNotificationRequest, opts ...grpc.CallOption) (*Void, error) {
-	out := new(Void)
+func (c *notificationsServiceWorkerClient) SendNotification(ctx context.Context, in *SendNotificationRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error) {
+	out := new(wrapperspb.BoolValue)
 	err := c.cc.Invoke(ctx, "/grpc.NotificationsServiceWorker/SendNotification", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -197,7 +198,7 @@ func (c *notificationsServiceWorkerClient) SendNotification(ctx context.Context,
 // All implementations must embed UnimplementedNotificationsServiceWorkerServer
 // for forward compatibility
 type NotificationsServiceWorkerServer interface {
-	SendNotification(context.Context, *SendNotificationRequest) (*Void, error)
+	SendNotification(context.Context, *SendNotificationRequest) (*wrapperspb.BoolValue, error)
 	mustEmbedUnimplementedNotificationsServiceWorkerServer()
 }
 
@@ -205,7 +206,7 @@ type NotificationsServiceWorkerServer interface {
 type UnimplementedNotificationsServiceWorkerServer struct {
 }
 
-func (UnimplementedNotificationsServiceWorkerServer) SendNotification(context.Context, *SendNotificationRequest) (*Void, error) {
+func (UnimplementedNotificationsServiceWorkerServer) SendNotification(context.Context, *SendNotificationRequest) (*wrapperspb.BoolValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendNotification not implemented")
 }
 func (UnimplementedNotificationsServiceWorkerServer) mustEmbedUnimplementedNotificationsServiceWorkerServer() {

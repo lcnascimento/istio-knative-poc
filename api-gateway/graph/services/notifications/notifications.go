@@ -56,7 +56,7 @@ func (s Service) ListNotifications(ctx context.Context) ([]*model.Notification, 
 	}
 
 	notifications := []*model.Notification{}
-	for _, notif := range res.Data {
+	for _, notif := range res.Notifications {
 		notifications = append(notifications, translate(notif))
 	}
 
@@ -88,12 +88,20 @@ func (s Service) SendNotification(ctx context.Context, id string) error {
 	return services.ErrNotImplemented
 }
 
+var dtoToModelChannel = map[pb.NotificationChannel]model.NotificationChannel{
+	pb.NotificationChannel_EMAIL:   model.NotificationChannelEmail,
+	pb.NotificationChannel_SMS:     model.NotificationChannelSms,
+	pb.NotificationChannel_BROWSER: model.NotificationChannelBrowser,
+}
+
 func translate(dto *pb.Notification) *model.Notification {
 	return &model.Notification{
-		ID:     dto.Id,
-		AppKey: dto.AppKey,
-		Name:   dto.Name,
-		// Channel: dto.Channel,
-		// Segment: ,
+		ID:      dto.Id,
+		AppKey:  dto.AppKey,
+		Name:    dto.Name,
+		Channel: dtoToModelChannel[dto.Channel],
+		Segment: &model.Segment{
+			ID: dto.SegmentId,
+		},
 	}
 }

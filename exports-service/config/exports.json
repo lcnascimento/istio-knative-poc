@@ -4,34 +4,31 @@
     "app_key": "AppKey 1",
     "name": "Export 1",
     "segment_id": "1",
-    "module": "ads"
+    "module": "ads",
+    "status": "done"
   },
   {
     "id": "2",
     "app_key": "AppKey 1",
     "name": "Export 2",
     "segment_id": "2",
-    "module": "ads"
+    "module": "ads",
+    "status": "running"
   },
   {
     "id": "3",
     "app_key": "AppKey 2",
     "name": "Export 3",
     "segment_id": "3",
-    "module": "ads"
+    "module": "ads",
+    "status": "done"
   },
   {
     "id": "4",
     "app_key": "AppKey 2",
     "name": "Export 4",
     "segment_id": "3",
-    "module": "users"
-  },
-  {
-    "id": "5",
-    "app_key": "AppKey 3",
-    "name": "Export 1",
-    "segment_id": "10",
-    "module": "ads"
+    "module": "users",
+    "status": "created"
   }
 ]

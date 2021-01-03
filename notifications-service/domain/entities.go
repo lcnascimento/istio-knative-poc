@@ -5,6 +5,18 @@ import (
 	segments_pb "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc/proto"
 )
 
+var dtoToDomainChannelMap = map[pb.NotificationChannel]Channel{
+	pb.NotificationChannel_EMAIL:   EmailChannel,
+	pb.NotificationChannel_SMS:     SMSChannel,
+	pb.NotificationChannel_BROWSER: BrowserPushChannel,
+}
+
+var domainToDTOChannelMap = map[Channel]pb.NotificationChannel{
+	EmailChannel:       pb.NotificationChannel_EMAIL,
+	SMSChannel:         pb.NotificationChannel_SMS,
+	BrowserPushChannel: pb.NotificationChannel_BROWSER,
+}
+
 // Notification ...
 type Notification struct {
 	ID        string  `json:"id"`
@@ -20,7 +32,7 @@ func (n Notification) ToGRPCDTO() *pb.Notification {
 		Id:        n.ID,
 		AppKey:    n.AppKey,
 		Name:      n.Name,
-		Channel:   string(n.Channel),
+		Channel:   domainToDTOChannelMap[n.Channel],
 		SegmentId: n.SegmentID,
 	}
 }
@@ -30,7 +42,7 @@ func (n *Notification) FillByGRPCDTO(dto *pb.Notification) {
 	n.ID = dto.Id
 	n.AppKey = dto.AppKey
 	n.Name = dto.Name
-	n.Channel = Channel(dto.Channel)
+	n.Channel = dtoToDomainChannelMap[dto.Channel]
 	n.SegmentID = dto.SegmentId
 }
 

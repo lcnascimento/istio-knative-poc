@@ -26,12 +26,5 @@
     "name": "Notification 4",
     "channel": "sms",
     "segment_id": "3"
-  },
-  {
-    "id": "5",
-    "app_key": "AppKey 3",
-    "name": "Notification 1",
-    "channel": "browser",
-    "segment_id": "10"
   }
 ]

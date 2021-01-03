@@ -7,6 +7,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type ExportsServiceFrontendClient interface {
 	GetExport(ctx context.Context, in *GetExportRequest, opts ...grpc.CallOption) (*GetExportResponse, error)
 	ListExports(ctx context.Context, in *ListExportsRequest, opts ...grpc.CallOption) (*ListExportsResponse, error)
-	EnqueueExport(ctx context.Context, in *EnqueueExportRequest, opts ...grpc.CallOption) (*Void, error)
+	EnqueueExport(ctx context.Context, in *EnqueueExportRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
 }
 
 type exportsServiceFrontendClient struct {
@@ -48,8 +49,8 @@ func (c *exportsServiceFrontendClient) ListExports(ctx context.Context, in *List
 	return out, nil
 }
 
-func (c *exportsServiceFrontendClient) EnqueueExport(ctx context.Context, in *EnqueueExportRequest, opts ...grpc.CallOption) (*Void, error) {
-	out := new(Void)
+func (c *exportsServiceFrontendClient) EnqueueExport(ctx context.Context, in *EnqueueExportRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error) {
+	out := new(wrapperspb.BoolValue)
 	err := c.cc.Invoke(ctx, "/grpc.ExportsServiceFrontend/EnqueueExport", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -63,7 +64,7 @@ func (c *exportsServiceFrontendClient) EnqueueExport(ctx context.Context, in *En
 type ExportsServiceFrontendServer interface {
 	GetExport(context.Context, *GetExportRequest) (*GetExportResponse, error)
 	ListExports(context.Context, *ListExportsRequest) (*ListExportsResponse, error)
-	EnqueueExport(context.Context, *EnqueueExportRequest) (*Void, error)
+	EnqueueExport(context.Context, *EnqueueExportRequest) (*wrapperspb.BoolValue, error)
 	mustEmbedUnimplementedExportsServiceFrontendServer()
 }
 
@@ -77,7 +78,7 @@ func (UnimplementedExportsServiceFrontendServer) GetExport(context.Context, *Get
 func (UnimplementedExportsServiceFrontendServer) ListExports(context.Context, *ListExportsRequest) (*ListExportsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListExports not implemented")
 }
-func (UnimplementedExportsServiceFrontendServer) EnqueueExport(context.Context, *EnqueueExportRequest) (*Void, error) {
+func (UnimplementedExportsServiceFrontendServer) EnqueueExport(context.Context, *EnqueueExportRequest) (*wrapperspb.BoolValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EnqueueExport not implemented")
 }
 func (UnimplementedExportsServiceFrontendServer) mustEmbedUnimplementedExportsServiceFrontendServer() {
@@ -173,7 +174,7 @@ var _ExportsServiceFrontend_serviceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ExportsServiceWorkerClient interface {
-	ProcessExport(ctx context.Context, in *ProcessExportRequest, opts ...grpc.CallOption) (*Void, error)
+	ProcessExport(ctx context.Context, in *ProcessExportRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
 }
 
 type exportsServiceWorkerClient struct {
@@ -184,8 +185,8 @@ func NewExportsServiceWorkerClient(cc grpc.ClientConnInterface) ExportsServiceWo
 	return &exportsServiceWorkerClient{cc}
 }
 
-func (c *exportsServiceWorkerClient) ProcessExport(ctx context.Context, in *ProcessExportRequest, opts ...grpc.CallOption) (*Void, error) {
-	out := new(Void)
+func (c *exportsServiceWorkerClient) ProcessExport(ctx context.Context, in *ProcessExportRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error) {
+	out := new(wrapperspb.BoolValue)
 	err := c.cc.Invoke(ctx, "/grpc.ExportsServiceWorker/ProcessExport", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -197,7 +198,7 @@ func (c *exportsServiceWorkerClient) ProcessExport(ctx context.Context, in *Proc
 // All implementations must embed UnimplementedExportsServiceWorkerServer
 // for forward compatibility
 type ExportsServiceWorkerServer interface {
-	ProcessExport(context.Context, *ProcessExportRequest) (*Void, error)
+	ProcessExport(context.Context, *ProcessExportRequest) (*wrapperspb.BoolValue, error)
 	mustEmbedUnimplementedExportsServiceWorkerServer()
 }
 
@@ -205,7 +206,7 @@ type ExportsServiceWorkerServer interface {
 type UnimplementedExportsServiceWorkerServer struct {
 }
 
-func (UnimplementedExportsServiceWorkerServer) ProcessExport(context.Context, *ProcessExportRequest) (*Void, error) {
+func (UnimplementedExportsServiceWorkerServer) ProcessExport(context.Context, *ProcessExportRequest) (*wrapperspb.BoolValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ProcessExport not implemented")
 }
 func (UnimplementedExportsServiceWorkerServer) mustEmbedUnimplementedExportsServiceWorkerServer() {}

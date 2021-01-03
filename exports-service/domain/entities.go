@@ -7,11 +7,60 @@ import (
 
 // Export ...
 type Export struct {
-	ID        string `json:"id"`
-	AppKey    string `json:"app_key"`
-	SegmentID string `json:"segment_id"`
-	Name      string `json:"name"`
-	Module    string `json:"module"`
+	ID        string       `json:"id"`
+	AppKey    string       `json:"app_key"`
+	SegmentID string       `json:"segment_id"`
+	Name      string       `json:"name"`
+	Module    ExportModule `json:"module"`
+	Status    ExportStatus `json:"status"`
+}
+
+// ExportModule ...
+type ExportModule string
+
+var (
+	// UsersExportModule ...
+	UsersExportModule ExportModule = "users"
+	// AdsExportModule ...
+	AdsExportModule ExportModule = "ads"
+)
+
+var dtoToDomainModule = map[pb.ExportModule]ExportModule{
+	pb.ExportModule_USERS: UsersExportModule,
+	pb.ExportModule_ADS:   AdsExportModule,
+}
+
+var domainToDTOModule = map[ExportModule]pb.ExportModule{
+	UsersExportModule: pb.ExportModule_USERS,
+	AdsExportModule:   pb.ExportModule_ADS,
+}
+
+// ExportStatus ...
+type ExportStatus string
+
+var (
+	// CreatedExportStatus ...
+	CreatedExportStatus ExportStatus = "created"
+	// RunningExportStatus ...
+	RunningExportStatus ExportStatus = "running"
+	// FailedExportStatus ...
+	FailedExportStatus ExportStatus = "failed"
+	// DoneExportStatus ...
+	DoneExportStatus ExportStatus = "done"
+)
+
+var dtoToDomainStatus = map[pb.ExportStatus]ExportStatus{
+	pb.ExportStatus_CREATED: CreatedExportStatus,
+	pb.ExportStatus_RUNNING: RunningExportStatus,
+	pb.ExportStatus_FAILED:  FailedExportStatus,
+	pb.ExportStatus_DONE:    DoneExportStatus,
+}
+
+var domainToDTOStatus = map[ExportStatus]pb.ExportStatus{
+	CreatedExportStatus: pb.ExportStatus_CREATED,
+	RunningExportStatus: pb.ExportStatus_RUNNING,
+	FailedExportStatus:  pb.ExportStatus_FAILED,
+	DoneExportStatus:    pb.ExportStatus_DONE,
 }
 
 // ToGRPCDTO ...
@@ -21,7 +70,8 @@ func (e Export) ToGRPCDTO() *pb.Export {
 		AppKey:    e.AppKey,
 		SegmentId: e.SegmentID,
 		Name:      e.Name,
-		Module:    e.Module,
+		Module:    domainToDTOModule[e.Module],
+		Status:    domainToDTOStatus[e.Status],
 	}
 }
 
@@ -31,7 +81,8 @@ func (e *Export) FillByGRPCDTO(dto *pb.Export) {
 	e.AppKey = dto.AppKey
 	e.SegmentID = dto.SegmentId
 	e.Name = dto.Name
-	e.Module = dto.Module
+	e.Module = dtoToDomainModule[dto.Module]
+	e.Status = dtoToDomainStatus[dto.Status]
 }
 
 // User ...

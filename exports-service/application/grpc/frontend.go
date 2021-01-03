@@ -6,6 +6,8 @@ import (
 	"log"
 
 	pb "github.com/lcnascimento/istio-knative-poc/exports-service/application/grpc/proto"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/lcnascimento/istio-knative-poc/exports-service/domain"
 )
 
@@ -63,11 +65,11 @@ func (f Frontend) ListExports(ctx context.Context, _ *pb.ListExportsRequest) (*p
 }
 
 // EnqueueExport ...
-func (f Frontend) EnqueueExport(ctx context.Context, in *pb.EnqueueExportRequest) (*pb.Void, error) {
+func (f Frontend) EnqueueExport(ctx context.Context, in *pb.EnqueueExportRequest) (*wrapperspb.BoolValue, error) {
 	if err := f.in.Enqueuer.EnqueueExport(ctx, in.ExportId); err != nil {
 		log.Printf("Could not enqueue export  %s: %s", in.ExportId, err.Error())
-		return nil, err
+		return wrapperspb.Bool(false), err
 	}
 
-	return &pb.Void{}, nil
+	return wrapperspb.Bool(true), nil
 }

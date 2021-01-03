@@ -4,14 +4,16 @@ option go_package = "github.com/lcnascimento/istio-knative-poc/exports-service/a
 
 package grpc;
 
+import "google/protobuf/wrappers.proto";
+
 service ExportsServiceFrontend {
   rpc GetExport(GetExportRequest) returns (GetExportResponse);
   rpc ListExports(ListExportsRequest) returns (ListExportsResponse);
-  rpc EnqueueExport(EnqueueExportRequest) returns (Void);
+  rpc EnqueueExport(EnqueueExportRequest) returns (google.protobuf.BoolValue);
 }
 
 service ExportsServiceWorker {
-  rpc ProcessExport(ProcessExportRequest) returns (Void);
+  rpc ProcessExport(ProcessExportRequest) returns (google.protobuf.BoolValue);
 }
 
 message GetExportRequest {
@@ -42,8 +44,19 @@ message Export {
   string app_key    = 2;
   string segment_id = 3;
   string name       = 4;
-  string module     = 5;
+
+  ExportModule module = 5;
+  ExportStatus status = 6;
 }
 
-message Void {
+enum ExportModule {
+  USERS = 0;
+  ADS   = 1;
+}
+
+enum ExportStatus {
+  CREATED = 0;
+  RUNNING = 1;
+  FAILED  = 2;
+  DONE    = 3;
 }

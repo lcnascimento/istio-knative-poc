@@ -35,7 +35,9 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Export() ExportResolver
 	Mutation() MutationResolver
+	Notification() NotificationResolver
 	Query() QueryResolver
 }
 
@@ -83,9 +85,15 @@ type ComplexityRoot struct {
 	}
 }
 
+type ExportResolver interface {
+	Segment(ctx context.Context, obj *model.Export) (*model.Segment, error)
+}
 type MutationResolver interface {
 	SendNotification(ctx context.Context, notificationID string) (*string, error)
 	CreateExport(ctx context.Context, input model.NewExport) (*model.Export, error)
+}
+type NotificationResolver interface {
+	Segment(ctx context.Context, obj *model.Notification) (*model.Segment, error)
 }
 type QueryResolver interface {
 	Exports(ctx context.Context) ([]*model.Export, error)
@@ -656,14 +664,14 @@ func (ec *executionContext) _Export_segment(ctx context.Context, field graphql.C
 		Object:     "Export",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Segment, nil
+		return ec.resolvers.Export().Segment(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -947,14 +955,14 @@ func (ec *executionContext) _Notification_segment(ctx context.Context, field gra
 		Object:     "Notification",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Segment, nil
+		return ec.resolvers.Notification().Segment(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2668,32 +2676,41 @@ func (ec *executionContext) _Export(ctx context.Context, sel ast.SelectionSet, o
 		case "id":
 			out.Values[i] = ec._Export_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "appKey":
 			out.Values[i] = ec._Export_appKey(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "segment":
-			out.Values[i] = ec._Export_segment(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Export_segment(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "name":
 			out.Values[i] = ec._Export_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "module":
 			out.Values[i] = ec._Export_module(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
 			out.Values[i] = ec._Export_status(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -2753,27 +2770,36 @@ func (ec *executionContext) _Notification(ctx context.Context, sel ast.Selection
 		case "id":
 			out.Values[i] = ec._Notification_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "appKey":
 			out.Values[i] = ec._Notification_appKey(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "segment":
-			out.Values[i] = ec._Notification_segment(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Notification_segment(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "name":
 			out.Values[i] = ec._Notification_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "channel":
 			out.Values[i] = ec._Notification_channel(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
