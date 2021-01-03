@@ -6,10 +6,13 @@ replace github.com/lcnascimento/istio-knative-poc/segments-service => ../segment
 
 replace github.com/lcnascimento/istio-knative-poc/notifications-service => ../notifications-service
 
+replace github.com/lcnascimento/istio-knative-poc/exports-service => ../exports-service
+
 go 1.14
 
 require (
 	github.com/99designs/gqlgen v0.13.0
+	github.com/lcnascimento/istio-knative-poc/exports-service v0.0.0-00010101000000-000000000000
 	github.com/lcnascimento/istio-knative-poc/go-libs v0.0.0-00010101000000-000000000000
 	github.com/lcnascimento/istio-knative-poc/notifications-service v0.0.0-00010101000000-000000000000
 	github.com/lcnascimento/istio-knative-poc/segments-service v0.0.0-00010101000000-000000000000

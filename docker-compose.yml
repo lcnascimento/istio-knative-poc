@@ -18,7 +18,7 @@ services:
     depends_on:
       - segments_service_frontend
       - notifications_service_frontend
-      # - exports_service_frontend
+      - exports_service_frontend
     container_name: api_gateway
 
   segments_service_frontend:

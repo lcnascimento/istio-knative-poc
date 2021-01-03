@@ -19,9 +19,20 @@ import (
 )
 
 func main() {
-	exports, err := exports.NewService(exports.ServiceInput{})
+	exportsAddress := fmt.Sprintf(
+		"%s:%d",
+		env.MustGetString("EXPORTS_SERVICE_SERVER_HOST"),
+		env.MustGetInt("EXPORTS_SERVICE_SERVER_PORT"),
+	)
+	exports, err := exports.NewService(exports.ServiceInput{
+		ServerAddress: exportsAddress,
+	})
 	if err != nil {
 		log.Fatalf("could not initialize ExportService: %s", err.Error())
+	}
+
+	if err := exports.Connect(); err != nil {
+		log.Fatalf("could not connect to ExportsService gRPC server: %s", err.Error())
 	}
 
 	notificationsAddress := fmt.Sprintf(

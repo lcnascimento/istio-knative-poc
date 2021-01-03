@@ -10,7 +10,7 @@ type Export struct {
 	ID        string `json:"id"`
 	AppKey    string `json:"app_key"`
 	SegmentID string `json:"segment_id"`
-	Name      string `json:"json"`
+	Name      string `json:"name"`
 	Module    string `json:"module"`
 }
 
