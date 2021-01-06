@@ -4,14 +4,16 @@ option go_package = "github.com/lcnascimento/istio-knative-poc/audiences-service
 
 package grpc;
 
+import "google/protobuf/wrappers.proto";
+
 service AudiencesServiceFrontend {
   rpc GetAudience(GetAudienceRequest) returns (GetAudienceResponse);
   rpc ListAudiences(ListAudiencesRequest) returns (ListAudiencesResponse);
-  rpc EnqueueAudienceSending(EnqueueAudienceSendingRequest) returns (Void);
+  rpc EnqueueAudienceSending(EnqueueAudienceSendingRequest) returns (google.protobuf.BoolValue);
 }
 
 service AudiencesServiceWorker {
-  rpc SendAudience(SendAudienceRequest) returns (Void);
+  rpc SendAudience(SendAudienceRequest) returns (google.protobuf.BoolValue);
 }
 
 message GetAudienceRequest {
@@ -38,12 +40,16 @@ message SendAudienceRequest {
 }
 
 message Audience {
-  string id = 1;
-  string app_key = 2;
-  string name = 3;
-  string segment_id = 4;
-  string provider = 5;
+  string id             = 1;
+  string app_key        = 2;
+  string name           = 3;
+  string segment_id     = 4;
+  string last_export_id = 5;
+
+  AudienceProvider provider = 6;
 }
 
-message Void {
+enum AudienceProvider {
+  GOOGLE    = 0;
+  FACEBOOK  = 1;
 }

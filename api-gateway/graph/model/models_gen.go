@@ -8,6 +8,15 @@ import (
 	"strconv"
 )
 
+type Audience struct {
+	ID         string           `json:"id"`
+	AppKey     string           `json:"appKey"`
+	Segment    *Segment         `json:"segment"`
+	LastExport *Export          `json:"lastExport"`
+	Provider   AudienceProvider `json:"provider"`
+	Name       string           `json:"name"`
+}
+
 type Export struct {
 	ID      string       `json:"id"`
 	AppKey  string       `json:"appKey"`
@@ -38,6 +47,47 @@ type Segment struct {
 	Name        string  `json:"name"`
 	Description *string `json:"description"`
 	Version     int     `json:"version"`
+}
+
+type AudienceProvider string
+
+const (
+	AudienceProviderGoogle   AudienceProvider = "GOOGLE"
+	AudienceProviderFacebook AudienceProvider = "FACEBOOK"
+)
+
+var AllAudienceProvider = []AudienceProvider{
+	AudienceProviderGoogle,
+	AudienceProviderFacebook,
+}
+
+func (e AudienceProvider) IsValid() bool {
+	switch e {
+	case AudienceProviderGoogle, AudienceProviderFacebook:
+		return true
+	}
+	return false
+}
+
+func (e AudienceProvider) String() string {
+	return string(e)
+}
+
+func (e *AudienceProvider) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AudienceProvider(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AudienceProvider", str)
+	}
+	return nil
+}
+
+func (e AudienceProvider) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type ExportModule string

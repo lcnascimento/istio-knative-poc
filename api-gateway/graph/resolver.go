@@ -10,6 +10,7 @@ import (
 
 // Resolver ...
 type Resolver struct {
+	AudiencesService     services.AudiencesService
 	NotificationsService services.NotificationsService
 	ExportsService       services.ExportsService
 	SegmentsService      services.SegmentsService

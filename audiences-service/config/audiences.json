@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1",
+    "app_key": "AppKey 1",
+    "segment_id": "1",
+    "last_export_id": "1",
+    "name": "Google audience",
+    "provider": "google"
+  },
+  {
+    "id": "2",
+    "app_key": "AppKey 1",
+    "segment_id": "2",
+    "last_export_id": "2",
+    "name": "Facebook audience",
+    "provider": "facebook"
+  }
+]

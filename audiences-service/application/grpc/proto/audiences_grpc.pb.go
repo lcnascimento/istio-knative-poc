@@ -7,6 +7,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type AudiencesServiceFrontendClient interface {
 	GetAudience(ctx context.Context, in *GetAudienceRequest, opts ...grpc.CallOption) (*GetAudienceResponse, error)
 	ListAudiences(ctx context.Context, in *ListAudiencesRequest, opts ...grpc.CallOption) (*ListAudiencesResponse, error)
-	EnqueueAudienceSending(ctx context.Context, in *EnqueueAudienceSendingRequest, opts ...grpc.CallOption) (*Void, error)
+	EnqueueAudienceSending(ctx context.Context, in *EnqueueAudienceSendingRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
 }
 
 type audiencesServiceFrontendClient struct {
@@ -48,8 +49,8 @@ func (c *audiencesServiceFrontendClient) ListAudiences(ctx context.Context, in *
 	return out, nil
 }
 
-func (c *audiencesServiceFrontendClient) EnqueueAudienceSending(ctx context.Context, in *EnqueueAudienceSendingRequest, opts ...grpc.CallOption) (*Void, error) {
-	out := new(Void)
+func (c *audiencesServiceFrontendClient) EnqueueAudienceSending(ctx context.Context, in *EnqueueAudienceSendingRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error) {
+	out := new(wrapperspb.BoolValue)
 	err := c.cc.Invoke(ctx, "/grpc.AudiencesServiceFrontend/EnqueueAudienceSending", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -63,7 +64,7 @@ func (c *audiencesServiceFrontendClient) EnqueueAudienceSending(ctx context.Cont
 type AudiencesServiceFrontendServer interface {
 	GetAudience(context.Context, *GetAudienceRequest) (*GetAudienceResponse, error)
 	ListAudiences(context.Context, *ListAudiencesRequest) (*ListAudiencesResponse, error)
-	EnqueueAudienceSending(context.Context, *EnqueueAudienceSendingRequest) (*Void, error)
+	EnqueueAudienceSending(context.Context, *EnqueueAudienceSendingRequest) (*wrapperspb.BoolValue, error)
 	mustEmbedUnimplementedAudiencesServiceFrontendServer()
 }
 
@@ -77,7 +78,7 @@ func (UnimplementedAudiencesServiceFrontendServer) GetAudience(context.Context, 
 func (UnimplementedAudiencesServiceFrontendServer) ListAudiences(context.Context, *ListAudiencesRequest) (*ListAudiencesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAudiences not implemented")
 }
-func (UnimplementedAudiencesServiceFrontendServer) EnqueueAudienceSending(context.Context, *EnqueueAudienceSendingRequest) (*Void, error) {
+func (UnimplementedAudiencesServiceFrontendServer) EnqueueAudienceSending(context.Context, *EnqueueAudienceSendingRequest) (*wrapperspb.BoolValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EnqueueAudienceSending not implemented")
 }
 func (UnimplementedAudiencesServiceFrontendServer) mustEmbedUnimplementedAudiencesServiceFrontendServer() {
@@ -173,7 +174,7 @@ var _AudiencesServiceFrontend_serviceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AudiencesServiceWorkerClient interface {
-	SendAudience(ctx context.Context, in *SendAudienceRequest, opts ...grpc.CallOption) (*Void, error)
+	SendAudience(ctx context.Context, in *SendAudienceRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error)
 }
 
 type audiencesServiceWorkerClient struct {
@@ -184,8 +185,8 @@ func NewAudiencesServiceWorkerClient(cc grpc.ClientConnInterface) AudiencesServi
 	return &audiencesServiceWorkerClient{cc}
 }
 
-func (c *audiencesServiceWorkerClient) SendAudience(ctx context.Context, in *SendAudienceRequest, opts ...grpc.CallOption) (*Void, error) {
-	out := new(Void)
+func (c *audiencesServiceWorkerClient) SendAudience(ctx context.Context, in *SendAudienceRequest, opts ...grpc.CallOption) (*wrapperspb.BoolValue, error) {
+	out := new(wrapperspb.BoolValue)
 	err := c.cc.Invoke(ctx, "/grpc.AudiencesServiceWorker/SendAudience", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -197,7 +198,7 @@ func (c *audiencesServiceWorkerClient) SendAudience(ctx context.Context, in *Sen
 // All implementations must embed UnimplementedAudiencesServiceWorkerServer
 // for forward compatibility
 type AudiencesServiceWorkerServer interface {
-	SendAudience(context.Context, *SendAudienceRequest) (*Void, error)
+	SendAudience(context.Context, *SendAudienceRequest) (*wrapperspb.BoolValue, error)
 	mustEmbedUnimplementedAudiencesServiceWorkerServer()
 }
 
@@ -205,7 +206,7 @@ type AudiencesServiceWorkerServer interface {
 type UnimplementedAudiencesServiceWorkerServer struct {
 }
 
-func (UnimplementedAudiencesServiceWorkerServer) SendAudience(context.Context, *SendAudienceRequest) (*Void, error) {
+func (UnimplementedAudiencesServiceWorkerServer) SendAudience(context.Context, *SendAudienceRequest) (*wrapperspb.BoolValue, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendAudience not implemented")
 }
 func (UnimplementedAudiencesServiceWorkerServer) mustEmbedUnimplementedAudiencesServiceWorkerServer() {

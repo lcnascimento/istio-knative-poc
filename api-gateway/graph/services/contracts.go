@@ -10,6 +10,12 @@ import (
 // ErrNotImplemented ...
 var ErrNotImplemented = fmt.Errorf("method not implemented yet")
 
+// AudiencesService ...
+type AudiencesService interface {
+	ListAudiences(ctx context.Context) ([]*model.Audience, error)
+	GetAudience(ctx context.Context, id string) (*model.Audience, error)
+}
+
 // ExportsService ...
 type ExportsService interface {
 	ListExports(ctx context.Context) ([]*model.Export, error)

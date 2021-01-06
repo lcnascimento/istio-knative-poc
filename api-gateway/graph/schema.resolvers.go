@@ -10,6 +10,14 @@ import (
 	"github.com/lcnascimento/istio-knative-poc/api-gateway/graph/model"
 )
 
+func (r *audienceResolver) Segment(ctx context.Context, obj *model.Audience) (*model.Segment, error) {
+	return r.SegmentsService.GetSegment(ctx, obj.Segment.ID)
+}
+
+func (r *audienceResolver) LastExport(ctx context.Context, obj *model.Audience) (*model.Export, error) {
+	return r.ExportsService.GetExport(ctx, obj.LastExport.ID)
+}
+
 func (r *exportResolver) Segment(ctx context.Context, obj *model.Export) (*model.Segment, error) {
 	return r.SegmentsService.GetSegment(ctx, obj.Segment.ID)
 }
@@ -24,6 +32,14 @@ func (r *mutationResolver) CreateExport(ctx context.Context, input model.NewExpo
 
 func (r *notificationResolver) Segment(ctx context.Context, obj *model.Notification) (*model.Segment, error) {
 	return r.SegmentsService.GetSegment(ctx, obj.Segment.ID)
+}
+
+func (r *queryResolver) Audiences(ctx context.Context) ([]*model.Audience, error) {
+	return r.AudiencesService.ListAudiences(ctx)
+}
+
+func (r *queryResolver) Audience(ctx context.Context, id string) (*model.Audience, error) {
+	return r.AudiencesService.GetAudience(ctx, id)
 }
 
 func (r *queryResolver) Exports(ctx context.Context) ([]*model.Export, error) {
@@ -50,6 +66,9 @@ func (r *queryResolver) Segment(ctx context.Context, id string) (*model.Segment,
 	return r.SegmentsService.GetSegment(ctx, id)
 }
 
+// Audience returns generated.AudienceResolver implementation.
+func (r *Resolver) Audience() generated.AudienceResolver { return &audienceResolver{r} }
+
 // Export returns generated.ExportResolver implementation.
 func (r *Resolver) Export() generated.ExportResolver { return &exportResolver{r} }
 
@@ -62,6 +81,7 @@ func (r *Resolver) Notification() generated.NotificationResolver { return &notif
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type audienceResolver struct{ *Resolver }
 type exportResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type notificationResolver struct{ *Resolver }

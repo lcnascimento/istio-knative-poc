@@ -2,6 +2,20 @@
 #
 # https://gqlgen.com/getting-started/
 
+type Audience {
+  id: ID!
+  appKey: String!
+  segment: Segment!
+  lastExport: Export
+  provider: AudienceProvider!
+  name: String!
+}
+
+enum AudienceProvider {
+  GOOGLE
+  FACEBOOK
+}
+
 type Export {
   id: ID!
   appKey: String!
@@ -48,6 +62,8 @@ type Segment {
 #################
 
 type Query {
+  audiences: [Audience!]!
+  audience(id: ID!): Audience!
   exports: [Export!]!
   export(id: ID!): Export!
   notifications: [Notification!]!

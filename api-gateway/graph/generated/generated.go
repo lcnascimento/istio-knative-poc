@@ -35,6 +35,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Audience() AudienceResolver
 	Export() ExportResolver
 	Mutation() MutationResolver
 	Notification() NotificationResolver
@@ -45,6 +46,15 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Audience struct {
+		AppKey     func(childComplexity int) int
+		ID         func(childComplexity int) int
+		LastExport func(childComplexity int) int
+		Name       func(childComplexity int) int
+		Provider   func(childComplexity int) int
+		Segment    func(childComplexity int) int
+	}
+
 	Export struct {
 		AppKey  func(childComplexity int) int
 		ID      func(childComplexity int) int
@@ -68,6 +78,8 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Audience      func(childComplexity int, id string) int
+		Audiences     func(childComplexity int) int
 		Export        func(childComplexity int, id string) int
 		Exports       func(childComplexity int) int
 		Notification  func(childComplexity int, id string) int
@@ -85,6 +97,10 @@ type ComplexityRoot struct {
 	}
 }
 
+type AudienceResolver interface {
+	Segment(ctx context.Context, obj *model.Audience) (*model.Segment, error)
+	LastExport(ctx context.Context, obj *model.Audience) (*model.Export, error)
+}
 type ExportResolver interface {
 	Segment(ctx context.Context, obj *model.Export) (*model.Segment, error)
 }
@@ -96,6 +112,8 @@ type NotificationResolver interface {
 	Segment(ctx context.Context, obj *model.Notification) (*model.Segment, error)
 }
 type QueryResolver interface {
+	Audiences(ctx context.Context) ([]*model.Audience, error)
+	Audience(ctx context.Context, id string) (*model.Audience, error)
 	Exports(ctx context.Context) ([]*model.Export, error)
 	Export(ctx context.Context, id string) (*model.Export, error)
 	Notifications(ctx context.Context) ([]*model.Notification, error)
@@ -118,6 +136,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Audience.appKey":
+		if e.complexity.Audience.AppKey == nil {
+			break
+		}
+
+		return e.complexity.Audience.AppKey(childComplexity), true
+
+	case "Audience.id":
+		if e.complexity.Audience.ID == nil {
+			break
+		}
+
+		return e.complexity.Audience.ID(childComplexity), true
+
+	case "Audience.lastExport":
+		if e.complexity.Audience.LastExport == nil {
+			break
+		}
+
+		return e.complexity.Audience.LastExport(childComplexity), true
+
+	case "Audience.name":
+		if e.complexity.Audience.Name == nil {
+			break
+		}
+
+		return e.complexity.Audience.Name(childComplexity), true
+
+	case "Audience.provider":
+		if e.complexity.Audience.Provider == nil {
+			break
+		}
+
+		return e.complexity.Audience.Provider(childComplexity), true
+
+	case "Audience.segment":
+		if e.complexity.Audience.Segment == nil {
+			break
+		}
+
+		return e.complexity.Audience.Segment(childComplexity), true
 
 	case "Export.appKey":
 		if e.complexity.Export.AppKey == nil {
@@ -219,6 +279,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Notification.Segment(childComplexity), true
+
+	case "Query.audience":
+		if e.complexity.Query.Audience == nil {
+			break
+		}
+
+		args, err := ec.field_Query_audience_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Audience(childComplexity, args["id"].(string)), true
+
+	case "Query.audiences":
+		if e.complexity.Query.Audiences == nil {
+			break
+		}
+
+		return e.complexity.Query.Audiences(childComplexity), true
 
 	case "Query.export":
 		if e.complexity.Query.Export == nil {
@@ -380,6 +459,20 @@ var sources = []*ast.Source{
 #
 # https://gqlgen.com/getting-started/
 
+type Audience {
+  id: ID!
+  appKey: String!
+  segment: Segment!
+  lastExport: Export
+  provider: AudienceProvider!
+  name: String!
+}
+
+enum AudienceProvider {
+  GOOGLE
+  FACEBOOK
+}
+
 type Export {
   id: ID!
   appKey: String!
@@ -426,6 +519,8 @@ type Segment {
 #################
 
 type Query {
+  audiences: [Audience!]!
+  audience(id: ID!): Audience!
   exports: [Export!]!
   export(id: ID!): Export!
   notifications: [Notification!]!
@@ -497,6 +592,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_audience_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -582,6 +692,213 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Audience_id(ctx context.Context, field graphql.CollectedField, obj *model.Audience) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Audience",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Audience_appKey(ctx context.Context, field graphql.CollectedField, obj *model.Audience) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Audience",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AppKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Audience_segment(ctx context.Context, field graphql.CollectedField, obj *model.Audience) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Audience",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Audience().Segment(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Segment)
+	fc.Result = res
+	return ec.marshalNSegment2ᚖgithubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐSegment(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Audience_lastExport(ctx context.Context, field graphql.CollectedField, obj *model.Audience) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Audience",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Audience().LastExport(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Export)
+	fc.Result = res
+	return ec.marshalOExport2ᚖgithubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐExport(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Audience_provider(ctx context.Context, field graphql.CollectedField, obj *model.Audience) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Audience",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Provider, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.AudienceProvider)
+	fc.Result = res
+	return ec.marshalNAudienceProvider2githubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐAudienceProvider(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Audience_name(ctx context.Context, field graphql.CollectedField, obj *model.Audience) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Audience",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Export_id(ctx context.Context, field graphql.CollectedField, obj *model.Export) (ret graphql.Marshaler) {
 	defer func() {
@@ -1047,6 +1364,83 @@ func (ec *executionContext) _Notification_channel(ctx context.Context, field gra
 	res := resTmp.(model.NotificationChannel)
 	fc.Result = res
 	return ec.marshalNNotificationChannel2githubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐNotificationChannel(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_audiences(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Audiences(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Audience)
+	fc.Result = res
+	return ec.marshalNAudience2ᚕᚖgithubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐAudienceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_audience(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_audience_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Audience(rctx, args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Audience)
+	fc.Result = res
+	return ec.marshalNAudience2ᚖgithubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐAudience(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_exports(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2662,6 +3056,73 @@ func (ec *executionContext) unmarshalInputNewExport(ctx context.Context, obj int
 
 // region    **************************** object.gotpl ****************************
 
+var audienceImplementors = []string{"Audience"}
+
+func (ec *executionContext) _Audience(ctx context.Context, sel ast.SelectionSet, obj *model.Audience) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, audienceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Audience")
+		case "id":
+			out.Values[i] = ec._Audience_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "appKey":
+			out.Values[i] = ec._Audience_appKey(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "segment":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Audience_segment(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "lastExport":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Audience_lastExport(ctx, field, obj)
+				return res
+			})
+		case "provider":
+			out.Values[i] = ec._Audience_provider(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._Audience_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var exportImplementors = []string{"Export"}
 
 func (ec *executionContext) _Export(ctx context.Context, sel ast.SelectionSet, obj *model.Export) graphql.Marshaler {
@@ -2827,6 +3288,34 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "audiences":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_audiences(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "audience":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_audience(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "exports":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -3214,6 +3703,67 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) marshalNAudience2githubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐAudience(ctx context.Context, sel ast.SelectionSet, v model.Audience) graphql.Marshaler {
+	return ec._Audience(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAudience2ᚕᚖgithubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐAudienceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Audience) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAudience2ᚖgithubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐAudience(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNAudience2ᚖgithubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐAudience(ctx context.Context, sel ast.SelectionSet, v *model.Audience) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Audience(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNAudienceProvider2githubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐAudienceProvider(ctx context.Context, v interface{}) (model.AudienceProvider, error) {
+	var res model.AudienceProvider
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNAudienceProvider2githubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐAudienceProvider(ctx context.Context, sel ast.SelectionSet, v model.AudienceProvider) graphql.Marshaler {
+	return v
+}
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
@@ -3714,6 +4264,13 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
+}
+
+func (ec *executionContext) marshalOExport2ᚖgithubᚗcomᚋlcnascimentoᚋistioᚑknativeᚑpocᚋapiᚑgatewayᚋgraphᚋmodelᚐExport(ctx context.Context, sel ast.SelectionSet, v *model.Export) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Export(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

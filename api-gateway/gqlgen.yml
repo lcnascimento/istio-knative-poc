@@ -62,3 +62,9 @@ models:
     fields:
       segment:
         resolver: true
+  Audience:
+    fields:
+      segment:
+        resolver: true
+      lastExport:
+        resolver: true

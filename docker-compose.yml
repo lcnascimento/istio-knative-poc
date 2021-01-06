@@ -14,11 +14,13 @@ services:
       - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
       - ./notifications-service:/go/src/github.com/lcnascimento/istio-knative-poc/notifications-service
       - ./exports-service:/go/src/github.com/lcnascimento/istio-knative-poc/exports-service
+      - ./audiences-service:/go/src/github.com/lcnascimento/istio-knative-poc/audiences-service
       - "api-gateway-pkgs:/go"
     depends_on:
       - segments_service_frontend
       - notifications_service_frontend
       - exports_service_frontend
+      - audiences_service_frontend
     container_name: api_gateway
 
   segments_service_frontend:
@@ -57,6 +59,8 @@ services:
       - ./notifications-service:/go/src/github.com/lcnascimento/istio-knative-poc/notifications-service
       - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
       - "notifications-service-worker-pkgs:/go"
+    depends_on:
+      - segments_service_frontend
     container_name: notifications_service_worker
 
   exports_service_frontend:
@@ -83,7 +87,25 @@ services:
       - ./exports-service:/go/src/github.com/lcnascimento/istio-knative-poc/exports-service
       - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
       - "exports-service-worker-pkgs:/go"
+    depends_on:
+      - segments_service_frontend
     container_name: exports_service_worker
+
+  audiences_service_frontend:
+    image: golang:1.14
+    working_dir: /go/src/github.com/lcnascimento/istio-knative-poc/audiences-service
+    command: go run cmd/grpc/frontend/main.go
+    env_file: 
+      - audiences-service/config/.env
+    volumes:
+      - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
+      - ./audiences-service:/go/src/github.com/lcnascimento/istio-knative-poc/audiences-service
+      - ./exports-service:/go/src/github.com/lcnascimento/istio-knative-poc/exports-service
+      - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
+      - "audiences-service-frontend-pkgs:/go"
+    depends_on:
+      - exports_service_frontend
+    container_name: audiences_service_frontend
 
 volumes:
   api-gateway-pkgs:
@@ -92,4 +114,5 @@ volumes:
   notifications-service-worker-pkgs:
   exports-service-frontend-pkgs:
   exports-service-worker-pkgs:
+  audiences-service-frontend-pkgs:
     
