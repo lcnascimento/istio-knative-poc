@@ -6,6 +6,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
+	"go.opentelemetry.io/otel/label"
 	"go.opentelemetry.io/otel/trace"
 
 	infra "github.com/lcnascimento/istio-knative-poc/go-libs/infra"
@@ -50,6 +51,8 @@ func NewFrontend(in FrontendInput) (*Frontend, error) {
 func (s Frontend) GetSegment(ctx context.Context, in *pb.GetSegmentRequest) (*pb.GetSegmentResponse, error) {
 	ctx, span := s.in.Tracer.Start(ctx, "application.grpc.GetSegment")
 	defer span.End()
+
+	span.SetAttributes(label.String("segment_id", in.SegmentId))
 
 	segment, err := s.in.Repo.FindSegment(ctx, in.SegmentId)
 	if err != nil {

@@ -7,15 +7,15 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/lcnascimento/istio-knative-poc/api-gateway/graph/model"
-	"github.com/lcnascimento/istio-knative-poc/api-gateway/graph/services"
 
 	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
 )
 
 // ServiceInput ...
 type ServiceInput struct {
-	Tracer trace.Tracer
-	Client pb.NotificationsServiceFrontendClient
+	Tracer         trace.Tracer
+	FrontendClient pb.NotificationsServiceFrontendClient
+	WorkerClient   pb.NotificationsServiceWorkerClient
 }
 
 // Service ...
@@ -29,8 +29,12 @@ func NewService(in ServiceInput) (*Service, error) {
 		return nil, fmt.Errorf("Missing required dependency: Tracer")
 	}
 
-	if in.Client == nil {
-		return nil, fmt.Errorf("Missing required dependency: Client")
+	if in.FrontendClient == nil {
+		return nil, fmt.Errorf("Missing required dependency: FrontendClient")
+	}
+
+	if in.WorkerClient == nil {
+		return nil, fmt.Errorf("Missing required dependency: WorkerClient")
 	}
 
 	return &Service{in: in}, nil
@@ -41,7 +45,7 @@ func (s Service) ListNotifications(ctx context.Context) ([]*model.Notification, 
 	ctx, span := s.in.Tracer.Start(ctx, "graph.services.notifications.ListNotifications")
 	defer span.End()
 
-	res, err := s.in.Client.ListNotifications(ctx, &pb.ListNotificationsRequest{})
+	res, err := s.in.FrontendClient.ListNotifications(ctx, &pb.ListNotificationsRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +63,7 @@ func (s Service) GetNotification(ctx context.Context, id string) (*model.Notific
 	ctx, span := s.in.Tracer.Start(ctx, "graph.services.notifications.GetNotification")
 	defer span.End()
 
-	res, err := s.in.Client.GetNotification(ctx, &pb.GetNotificationRequest{
+	res, err := s.in.FrontendClient.GetNotification(ctx, &pb.GetNotificationRequest{
 		NotificationId: id,
 	})
 	if err != nil {
@@ -74,7 +78,11 @@ func (s Service) SendNotification(ctx context.Context, id string) error {
 	ctx, span := s.in.Tracer.Start(ctx, "graph.services.notifications.SendNotification")
 	defer span.End()
 
-	return services.ErrNotImplemented
+	_, err := s.in.WorkerClient.SendNotification(ctx, &pb.SendNotificationRequest{
+		NotificationId: id,
+	})
+
+	return err
 }
 
 var dtoToModelChannel = map[pb.NotificationChannel]model.NotificationChannel{

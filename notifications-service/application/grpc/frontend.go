@@ -47,7 +47,7 @@ func NewFrontend(in FrontendInput) (*Frontend, error) {
 
 // GetNotification ...
 func (s Frontend) GetNotification(ctx context.Context, in *pb.GetNotificationRequest) (*pb.GetNotificationResponse, error) {
-	ctx, span := s.in.Tracer.Start(ctx, "application.grpc.GetNotification")
+	ctx, span := s.in.Tracer.Start(ctx, "application.grpc.frontend.GetNotification")
 	defer span.End()
 
 	span.SetAttributes(label.String("notification_id", in.NotificationId))
@@ -63,7 +63,7 @@ func (s Frontend) GetNotification(ctx context.Context, in *pb.GetNotificationReq
 
 // ListNotifications ...
 func (s Frontend) ListNotifications(ctx context.Context, in *pb.ListNotificationsRequest) (*pb.ListNotificationsResponse, error) {
-	ctx, span := s.in.Tracer.Start(ctx, "application.grpc.ListNotifications")
+	ctx, span := s.in.Tracer.Start(ctx, "application.grpc.frontend.ListNotifications")
 	defer span.End()
 
 	notifs, err := s.in.Repo.ListNotifications(ctx)
@@ -82,7 +82,7 @@ func (s Frontend) ListNotifications(ctx context.Context, in *pb.ListNotification
 
 // EnqueueSendingNotification ...
 func (s Frontend) EnqueueSendingNotification(ctx context.Context, in *pb.SendNotificationRequest) (*wrapperspb.BoolValue, error) {
-	ctx, span := s.in.Tracer.Start(ctx, "application.grpc.EnqueueSendingNotification")
+	ctx, span := s.in.Tracer.Start(ctx, "application.grpc.frontend.EnqueueSendingNotification")
 	defer span.End()
 
 	span.SetAttributes(label.String("notification_id", in.NotificationId))

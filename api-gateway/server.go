@@ -172,7 +172,7 @@ func buildSegmentsService(ctx context.Context, tracer trace.Tracer, log infra.Lo
 }
 
 func buildNotificationsService(ctx context.Context, tracer trace.Tracer, log infra.LogProvider) *notifications.Service {
-	notifGRPCClient, err := grpc.NewClient(grpc.ClientInput{
+	notifGRPCFrontendClient, err := grpc.NewClient(grpc.ClientInput{
 		ServerAddress: fmt.Sprintf(
 			"%s:%d",
 			env.MustGetString("NOTIFICATIONS_SERVICE_SERVER_HOST"),
@@ -187,7 +187,29 @@ func buildNotificationsService(ctx context.Context, tracer trace.Tracer, log inf
 		panic(msg)
 	}
 
-	notifGRPCClientConn, err := notifGRPCClient.Connect(ctx)
+	notifGRPCFrontendClientConn, err := notifGRPCFrontendClient.Connect(ctx)
+	if err != nil {
+		msg := fmt.Sprintf("can not connect to NotificationsService's gRPC client: %s", err.Error())
+		log.Critical(ctx, errors.New(msg))
+		panic(msg)
+	}
+
+	notifGRPCWorkerClient, err := grpc.NewClient(grpc.ClientInput{
+		ServerAddress: fmt.Sprintf(
+			"%s:%d",
+			env.MustGetString("NOTIFICATIONS_SERVICE_WORKER_HOST"),
+			env.MustGetInt("NOTIFICATIONS_SERVICE_WORKER_PORT"),
+		),
+		Tracer: tracer,
+		Logger: log,
+	})
+	if err != nil {
+		msg := fmt.Sprintf("can not initialize NotificationsService's gRPC client: %s", err.Error())
+		log.Critical(ctx, errors.New(msg))
+		panic(msg)
+	}
+
+	notifGRPCWorkerClientConn, err := notifGRPCWorkerClient.Connect(ctx)
 	if err != nil {
 		msg := fmt.Sprintf("can not connect to NotificationsService's gRPC client: %s", err.Error())
 		log.Critical(ctx, errors.New(msg))
@@ -195,8 +217,9 @@ func buildNotificationsService(ctx context.Context, tracer trace.Tracer, log inf
 	}
 
 	notifications, err := notifications.NewService(notifications.ServiceInput{
-		Tracer: tracer,
-		Client: notifPb.NewNotificationsServiceFrontendClient(notifGRPCClientConn),
+		Tracer:         tracer,
+		FrontendClient: notifPb.NewNotificationsServiceFrontendClient(notifGRPCFrontendClientConn),
+		WorkerClient:   notifPb.NewNotificationsServiceWorkerClient(notifGRPCWorkerClientConn),
 	})
 	if err != nil {
 		msg := fmt.Sprintf("can not initialize NotificationsService: %s", err.Error())

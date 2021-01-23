@@ -32,8 +32,8 @@ func main() {
 
 	tracer, flush, err := tracing.Init(tracing.TracerInput{
 		AgentEndpoint: fmt.Sprintf("%s:%d", env.MustGetString("JAEGER_AGENT_HOST"), env.MustGetInt("JAEGER_AGENT_PORT")),
-		ServiceName:   "notifications-service-frontend",
-		TracerName:    "notifications-service-frontend-tracer",
+		ServiceName:   "notifications-service-worker",
+		TracerName:    "notifications-service-worker-tracer",
 	})
 	if err != nil {
 		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize Tracer %s", err.Error())))
@@ -126,7 +126,10 @@ func main() {
 		return
 	}
 
-	worker, err := app.NewWorker(app.WorkerInput{Sender: sender})
+	worker, err := app.NewWorker(app.WorkerInput{
+		Tracer: tracer,
+		Sender: sender,
+	})
 	if err != nil {
 		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize GRPCNotificationsSender %s", err.Error())))
 		return

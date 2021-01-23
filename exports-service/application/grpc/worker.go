@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	pb "github.com/lcnascimento/istio-knative-poc/exports-service/application/grpc/proto"
+	"go.opentelemetry.io/otel/label"
 	"go.opentelemetry.io/otel/trace"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -41,6 +42,8 @@ func NewWorker(in WorkerInput) (*Worker, error) {
 func (w Worker) ProcessExport(ctx context.Context, in *pb.ProcessExportRequest) (*wrapperspb.BoolValue, error) {
 	ctx, span := w.in.Tracer.Start(ctx, "application.grpc.ProcessExport")
 	defer span.End()
+
+	span.SetAttributes(label.String("export_id", in.ExportId))
 
 	if err := w.in.Exportator.Export(ctx, in.ExportId); err != nil {
 		return wrapperspb.Bool(false), err

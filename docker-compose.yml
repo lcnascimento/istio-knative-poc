@@ -19,6 +19,7 @@ services:
     depends_on:
       - segments_service_frontend
       - notifications_service_frontend
+      - notifications_service_worker
       - exports_service_frontend
       - audiences_service_frontend
       - jaeger

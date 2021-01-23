@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	pb "github.com/lcnascimento/istio-knative-poc/exports-service/application/grpc/proto"
+	"go.opentelemetry.io/otel/label"
 	"go.opentelemetry.io/otel/trace"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -47,6 +48,8 @@ func (f Frontend) GetExport(ctx context.Context, in *pb.GetExportRequest) (*pb.G
 	ctx, span := f.in.Tracer.Start(ctx, "application.grpc.GetExport")
 	defer span.End()
 
+	span.SetAttributes(label.String("export_id", in.ExportId))
+
 	expo, err := f.in.Repo.GetExport(ctx, in.ExportId)
 	if err != nil {
 		return nil, err
@@ -77,6 +80,8 @@ func (f Frontend) ListExports(ctx context.Context, _ *pb.ListExportsRequest) (*p
 func (f Frontend) EnqueueExport(ctx context.Context, in *pb.EnqueueExportRequest) (*wrapperspb.BoolValue, error) {
 	ctx, span := f.in.Tracer.Start(ctx, "application.grpc.EnqueueExport")
 	defer span.End()
+
+	span.SetAttributes(label.String("export_id", in.ExportId))
 
 	if err := f.in.Enqueuer.EnqueueExport(ctx, in.ExportId); err != nil {
 		return wrapperspb.Bool(false), err

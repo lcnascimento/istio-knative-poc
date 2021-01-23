@@ -3,16 +3,19 @@ package grpc
 import (
 	"context"
 	"fmt"
-	"log"
 
-	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
+	"go.opentelemetry.io/otel/label"
+	"go.opentelemetry.io/otel/trace"
 	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain"
+
+	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
 )
 
 // WorkerInput ...
 type WorkerInput struct {
+	Tracer trace.Tracer
 	Sender domain.NotificationsSender
 }
 
@@ -25,8 +28,12 @@ type Worker struct {
 
 // NewWorker ...
 func NewWorker(in WorkerInput) (*Worker, error) {
+	if in.Tracer == nil {
+		return nil, fmt.Errorf("Missing required dependency: Tracer")
+	}
+
 	if in.Sender == nil {
-		return nil, fmt.Errorf("Missing NotificationsSender dependency")
+		return nil, fmt.Errorf("Missing required dependency: Sender")
 	}
 
 	return &Worker{in: in}, nil
@@ -34,8 +41,12 @@ func NewWorker(in WorkerInput) (*Worker, error) {
 
 // SendNotification ...
 func (s Worker) SendNotification(ctx context.Context, in *pb.SendNotificationRequest) (*wrapperspb.BoolValue, error) {
+	ctx, span := s.in.Tracer.Start(ctx, "application.grpc.worker.SendNotification")
+	defer span.End()
+
+	span.SetAttributes(label.String("notification_id", in.NotificationId))
+
 	if err := s.in.Sender.SendNotification(ctx, in.NotificationId); err != nil {
-		log.Printf("Error sending notification %s: %s", in.NotificationId, err.Error())
 		return wrapperspb.Bool(false), err
 	}
 
