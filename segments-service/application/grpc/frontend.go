@@ -2,16 +2,24 @@ package grpc
 
 import (
 	"context"
-	"log"
+	"fmt"
+
+	"golang.org/x/sync/errgroup"
+
+	"go.opentelemetry.io/otel/trace"
+
+	infra "github.com/lcnascimento/istio-knative-poc/go-libs/infra"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/errors"
 
 	pb "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc/proto"
 	"github.com/lcnascimento/istio-knative-poc/segments-service/domain"
-	"golang.org/x/sync/errgroup"
 )
 
 // FrontendInput ...
 type FrontendInput struct {
-	Repo domain.SegmentsRepository
+	Tracer trace.Tracer
+	Repo   domain.SegmentsRepository
+	Logger infra.LogProvider
 }
 
 // Frontend ...
@@ -22,12 +30,27 @@ type Frontend struct {
 }
 
 // NewFrontend ...
-func NewFrontend(in FrontendInput) *Frontend {
-	return &Frontend{in: in}
+func NewFrontend(in FrontendInput) (*Frontend, error) {
+	if in.Tracer == nil {
+		return nil, fmt.Errorf("Missing required dependency: Tracer")
+	}
+
+	if in.Logger == nil {
+		return nil, fmt.Errorf("Missing required dependency: Logger")
+	}
+
+	if in.Repo == nil {
+		return nil, fmt.Errorf("Missing required dependency: Repo")
+	}
+
+	return &Frontend{in: in}, nil
 }
 
 // GetSegment ...
 func (s Frontend) GetSegment(ctx context.Context, in *pb.GetSegmentRequest) (*pb.GetSegmentResponse, error) {
+	ctx, span := s.in.Tracer.Start(ctx, "application.grpc.GetSegment")
+	defer span.End()
+
 	segment, err := s.in.Repo.FindSegment(ctx, in.SegmentId)
 	if err != nil {
 		return nil, err
@@ -38,6 +61,9 @@ func (s Frontend) GetSegment(ctx context.Context, in *pb.GetSegmentRequest) (*pb
 
 // ListSegments ...
 func (s Frontend) ListSegments(ctx context.Context, in *pb.ListSegmentsRequest) (*pb.ListSegmentsResponse, error) {
+	ctx, span := s.in.Tracer.Start(ctx, "application.grpc.ListSegments")
+	defer span.End()
+
 	segments, err := s.in.Repo.ListSegments(ctx)
 	if err != nil {
 		return nil, err
@@ -53,6 +79,9 @@ func (s Frontend) ListSegments(ctx context.Context, in *pb.ListSegmentsRequest) 
 
 // GetSegmentUsers ...
 func (s Frontend) GetSegmentUsers(in *pb.GetSegmentUsersRequest, srv pb.SegmentsServiceFrontend_GetSegmentUsersServer) error {
+	ctx, span := s.in.Tracer.Start(srv.Context(), "application.grpc.GetSegmentUsers")
+	defer span.End()
+
 	ctx, done := context.WithCancel(srv.Context())
 	defer done()
 
@@ -70,12 +99,13 @@ func (s Frontend) GetSegmentUsers(in *pb.GetSegmentUsersRequest, srv pb.Segments
 			}
 
 			if err := srv.Context().Err(); err != nil {
+				s.in.Logger.Error(ctx, errors.New(fmt.Sprintf("Something went wrong with in the connection context: %s", err.Error())))
 				done()
 				return err
 			}
 
-			log.Println("Sending message to client")
 			if err := srv.Send(&resp); err != nil {
+				s.in.Logger.Error(ctx, errors.New(fmt.Sprintf("Could not send package to gRPC client: %s", err.Error())))
 				done()
 				return err
 			}
@@ -94,10 +124,8 @@ func (s Frontend) GetSegmentUsers(in *pb.GetSegmentUsersRequest, srv pb.Segments
 	})
 
 	if err := g.Wait(); err != nil {
-		log.Printf("Something went wrong: %s", err.Error())
 		return err
 	}
 
-	log.Println("Segment's users transfer completed")
 	return nil
 }

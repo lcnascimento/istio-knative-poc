@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 
-	"google.golang.org/grpc"
+	"go.opentelemetry.io/otel/trace"
+
+	infra "github.com/lcnascimento/istio-knative-poc/go-libs/infra"
 
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain"
 	pb "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc/proto"
@@ -15,34 +17,41 @@ import (
 type ServiceInput struct {
 	ServerAddress string
 	BulkSize      int
+
+	Tracer trace.Tracer
+	Logger infra.LogProvider
+	Client pb.SegmentsServiceFrontendClient
 }
 
 // Service ...
 type Service struct {
 	in ServiceInput
-
-	cli pb.SegmentsServiceFrontendClient
 }
 
 // NewService ...
 func NewService(in ServiceInput) (*Service, error) {
-	return &Service{in: in}, nil
-}
-
-// Connect ...
-func (s *Service) Connect() error {
-	conn, err := grpc.Dial(s.in.ServerAddress, grpc.WithInsecure())
-	if err != nil {
-		return err
+	if in.Tracer == nil {
+		return nil, fmt.Errorf("Missing required dependency: Tracer")
 	}
 
-	s.cli = pb.NewSegmentsServiceFrontendClient(conn)
+	if in.Logger == nil {
+		return nil, fmt.Errorf("Missing required dependency: Logger")
+	}
 
-	return nil
+	if in.Client == nil {
+		return nil, fmt.Errorf("Missing required dependency: Client")
+	}
+
+	return &Service{in: in}, nil
 }
 
 // GetSegmentUsers ...
 func (s Service) GetSegmentUsers(ctx context.Context, id string) (chan []*domain.User, chan error) {
+	ctx, span := s.in.Tracer.Start(ctx, "domain.segments.GetSegmentUsers")
+	defer span.End()
+
+	s.in.Logger.Info(ctx, "Streaming users from segment %s", id)
+
 	ch := make(chan []*domain.User)
 	errCh := make(chan error)
 
@@ -50,12 +59,7 @@ func (s Service) GetSegmentUsers(ctx context.Context, id string) (chan []*domain
 		defer close(ch)
 		defer close(errCh)
 
-		if s.cli == nil {
-			errCh <- fmt.Errorf("client not connected to gRPC server")
-			return
-		}
-
-		stream, err := s.cli.GetSegmentUsers(ctx, &pb.GetSegmentUsersRequest{
+		stream, err := s.in.Client.GetSegmentUsers(ctx, &pb.GetSegmentUsersRequest{
 			SegmentId: id,
 			Size:      int32(s.in.BulkSize),
 		})
@@ -71,6 +75,8 @@ func (s Service) GetSegmentUsers(ctx context.Context, id string) (chan []*domain
 			}
 
 			if err != nil {
+				err := fmt.Errorf("failed trying to retrieve data from gRPC server stream")
+				s.in.Logger.Error(ctx, err)
 				errCh <- err
 				return
 			}

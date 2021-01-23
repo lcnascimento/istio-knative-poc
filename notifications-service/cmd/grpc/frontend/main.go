@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"net"
 
-	"google.golang.org/grpc"
+	ggrpc "google.golang.org/grpc"
 
 	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/env"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/errors"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/grpc"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/log"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/tracing"
 
 	app "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc"
 	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
@@ -17,34 +20,58 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
+	log, err := log.NewClient(log.ClientInput{Level: log.DebugLevel})
+
+	tracer, flush, err := tracing.Init(tracing.TracerInput{
+		AgentEndpoint: fmt.Sprintf("%s:%d", env.MustGetString("JAEGER_AGENT_HOST"), env.MustGetInt("JAEGER_AGENT_PORT")),
+		ServiceName:   "notifications-service-frontend",
+		TracerName:    "notifications-service-frontend-tracer",
+	})
+	if err != nil {
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize Tracer %s", err.Error())))
+		return
+	}
+	defer flush()
+
 	enqueuer, err := enqueuer.NewService(enqueuer.ServiceInput{})
 	if err != nil {
-		log.Fatalf("can not initialize NotificationsEnqueuer %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize NotificationsEnqueuer %s", err.Error())))
+		return
 	}
 
-	repo, err := repository.NewService(repository.ServiceInput{})
+	repo, err := repository.NewService(repository.ServiceInput{Logger: log, Tracer: tracer})
 	if err != nil {
-		log.Fatalf("can not initialize NotificationsRepository %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize NotificationsRepository %s", err.Error())))
+		return
 	}
 
 	frontend, err := app.NewFrontend(app.FrontendInput{
+		Tracer:   tracer,
 		Repo:     repo,
 		Enqueuer: enqueuer,
 	})
 	if err != nil {
-		log.Fatalf("can not initialize server %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize server %s", err.Error())))
+		return
 	}
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", env.MustGetInt("PORT")))
+	s, err := grpc.NewServer(grpc.ServerInput{
+		Port:   env.MustGetInt("PORT"),
+		Tracer: tracer,
+		Logger: log,
+		Registrator: func(srv ggrpc.ServiceRegistrar) {
+			pb.RegisterNotificationsServiceFrontendServer(srv, frontend)
+		},
+	})
 	if err != nil {
-		log.Fatalf("can not initialize gRPC server %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not create gRPC server %s", err.Error())))
+		return
 	}
 
-	s := grpc.NewServer()
-	pb.RegisterNotificationsServiceFrontendServer(s, frontend)
-
-	log.Println("gRPC server started")
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("could not initialize grpc server: %v", err)
+	if err := s.Listen(ctx); err != nil {
+		log.Critical(ctx, errors.New(fmt.Sprintf("could not initialize grpc server: %s", err.Error())))
+		return
 	}
 }

@@ -4,53 +4,44 @@ import (
 	"context"
 	"fmt"
 
-	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
-	"google.golang.org/grpc"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/lcnascimento/istio-knative-poc/api-gateway/graph/model"
 	"github.com/lcnascimento/istio-knative-poc/api-gateway/graph/services"
+
+	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
 )
 
 // ServiceInput ...
 type ServiceInput struct {
-	ServerAddress string
+	Tracer trace.Tracer
+	Client pb.NotificationsServiceFrontendClient
 }
 
 // Service ...
 type Service struct {
 	in ServiceInput
-
-	cli pb.NotificationsServiceFrontendClient
 }
 
 // NewService ...
 func NewService(in ServiceInput) (*Service, error) {
-	if in.ServerAddress == "" {
-		return nil, fmt.Errorf("Missing required dependency: ServerAddress")
+	if in.Tracer == nil {
+		return nil, fmt.Errorf("Missing required dependency: Tracer")
+	}
+
+	if in.Client == nil {
+		return nil, fmt.Errorf("Missing required dependency: Client")
 	}
 
 	return &Service{in: in}, nil
 }
 
-// Connect ...
-func (s *Service) Connect() error {
-	conn, err := grpc.Dial(s.in.ServerAddress, grpc.WithInsecure())
-	if err != nil {
-		return err
-	}
-
-	s.cli = pb.NewNotificationsServiceFrontendClient(conn)
-
-	return nil
-}
-
 // ListNotifications ...
 func (s Service) ListNotifications(ctx context.Context) ([]*model.Notification, error) {
-	if s.cli == nil {
-		return nil, fmt.Errorf("client not connected to NotificationsService gRPC server")
-	}
+	ctx, span := s.in.Tracer.Start(ctx, "graph.services.notifications.ListNotifications")
+	defer span.End()
 
-	res, err := s.cli.ListNotifications(ctx, &pb.ListNotificationsRequest{})
+	res, err := s.in.Client.ListNotifications(ctx, &pb.ListNotificationsRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -65,11 +56,10 @@ func (s Service) ListNotifications(ctx context.Context) ([]*model.Notification, 
 
 // GetNotification ...
 func (s Service) GetNotification(ctx context.Context, id string) (*model.Notification, error) {
-	if s.cli == nil {
-		return nil, fmt.Errorf("client not connected to NotificationsService gRPC server")
-	}
+	ctx, span := s.in.Tracer.Start(ctx, "graph.services.notifications.GetNotification")
+	defer span.End()
 
-	res, err := s.cli.GetNotification(ctx, &pb.GetNotificationRequest{
+	res, err := s.in.Client.GetNotification(ctx, &pb.GetNotificationRequest{
 		NotificationId: id,
 	})
 	if err != nil {
@@ -81,9 +71,8 @@ func (s Service) GetNotification(ctx context.Context, id string) (*model.Notific
 
 // SendNotification ...
 func (s Service) SendNotification(ctx context.Context, id string) error {
-	if s.cli == nil {
-		return fmt.Errorf("client not connected to NotificationsService gRPC server")
-	}
+	ctx, span := s.in.Tracer.Start(ctx, "graph.services.notifications.SendNotification")
+	defer span.End()
 
 	return services.ErrNotImplemented
 }

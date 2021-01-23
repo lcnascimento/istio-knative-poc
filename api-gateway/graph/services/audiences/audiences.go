@@ -4,56 +4,39 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc"
+	"go.opentelemetry.io/otel/trace"
 
 	pb "github.com/lcnascimento/istio-knative-poc/audiences-service/application/grpc/proto"
 
 	"github.com/lcnascimento/istio-knative-poc/api-gateway/graph/model"
 )
 
-// ErrClientNotConnected ...
-var ErrClientNotConnected = fmt.Errorf("client not connected to AudiencesService gRPC server")
-
 // ServiceInput ...
 type ServiceInput struct {
-	ServerAddress string
+	Tracer trace.Tracer
+	Client pb.AudiencesServiceFrontendClient
 }
 
 // Service ...
 type Service struct {
 	in ServiceInput
-
-	cli pb.AudiencesServiceFrontendClient
 }
 
 // NewService ...
 func NewService(in ServiceInput) (*Service, error) {
-	if in.ServerAddress == "" {
-		return nil, fmt.Errorf("Missing required dependency: ServerAddress")
+	if in.Tracer == nil {
+		return nil, fmt.Errorf("Missing required dependency: Tracer")
 	}
 
 	return &Service{in: in}, nil
 }
 
-// Connect ...
-func (s *Service) Connect() error {
-	conn, err := grpc.Dial(s.in.ServerAddress, grpc.WithInsecure())
-	if err != nil {
-		return err
-	}
-
-	s.cli = pb.NewAudiencesServiceFrontendClient(conn)
-
-	return nil
-}
-
 // ListAudiences ...
 func (s Service) ListAudiences(ctx context.Context) ([]*model.Audience, error) {
-	if s.cli == nil {
-		return nil, ErrClientNotConnected
-	}
+	ctx, span := s.in.Tracer.Start(ctx, "graph.services.audiences.ListAudiences")
+	defer span.End()
 
-	res, err := s.cli.ListAudiences(ctx, &pb.ListAudiencesRequest{})
+	res, err := s.in.Client.ListAudiences(ctx, &pb.ListAudiencesRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -68,11 +51,10 @@ func (s Service) ListAudiences(ctx context.Context) ([]*model.Audience, error) {
 
 // GetAudience ...
 func (s Service) GetAudience(ctx context.Context, id string) (*model.Audience, error) {
-	if s.cli == nil {
-		return nil, ErrClientNotConnected
-	}
+	ctx, span := s.in.Tracer.Start(ctx, "graph.services.audiences.GetAudience")
+	defer span.End()
 
-	res, err := s.cli.GetAudience(ctx, &pb.GetAudienceRequest{
+	res, err := s.in.Client.GetAudience(ctx, &pb.GetAudienceRequest{
 		AudienceId: id,
 	})
 	if err != nil {

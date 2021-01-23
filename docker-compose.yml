@@ -21,6 +21,7 @@ services:
       - notifications_service_frontend
       - exports_service_frontend
       - audiences_service_frontend
+      - jaeger
     container_name: api_gateway
 
   segments_service_frontend:
@@ -46,6 +47,8 @@ services:
       - ./notifications-service:/go/src/github.com/lcnascimento/istio-knative-poc/notifications-service
       - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
       - "notifications-service-frontend-pkgs:/go"
+    depends_on:
+      - jaeger
     container_name: notifications_service_frontend
 
   notifications_service_worker:
@@ -106,6 +109,14 @@ services:
     depends_on:
       - exports_service_frontend
     container_name: audiences_service_frontend
+  
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp"
+      - "14268:14268"
+      - "16686:16686"
+    container_name: istio_knative_poc_jaeger
 
 volumes:
   api-gateway-pkgs:

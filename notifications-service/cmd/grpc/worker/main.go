@@ -1,16 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"net"
 
-	"google.golang.org/grpc"
+	ggrpc "google.golang.org/grpc"
 
 	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/env"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/errors"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/grpc"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/log"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/tracing"
 
 	app "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc"
 	pb "github.com/lcnascimento/istio-knative-poc/notifications-service/application/grpc/proto"
+	segmentsPb "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc/proto"
 
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain"
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain/firebase"
@@ -22,41 +26,86 @@ import (
 )
 
 func main() {
-	repo, err := repository.NewService(repository.ServiceInput{})
-	if err != nil {
-		log.Fatalf("can not initialize NotificationsRepository %v", err)
-	}
+	ctx := context.Background()
 
-	segmentsAddress := fmt.Sprintf(
-		"%s:%d",
-		env.MustGetString("SEGMENTS_SERVICE_SERVER_HOST"),
-		env.MustGetInt("SEGMENTS_SERVICE_SERVER_PORT"),
-	)
-	segments, err := segments.NewService(segments.ServiceInput{
-		ServerAddress: segmentsAddress,
-		BulkSize:      env.MustGetInt("SEGMENTS_SERVICE_BULK_SIZE"),
+	log, err := log.NewClient(log.ClientInput{Level: log.DebugLevel})
+
+	tracer, flush, err := tracing.Init(tracing.TracerInput{
+		AgentEndpoint: fmt.Sprintf("%s:%d", env.MustGetString("JAEGER_AGENT_HOST"), env.MustGetInt("JAEGER_AGENT_PORT")),
+		ServiceName:   "notifications-service-frontend",
+		TracerName:    "notifications-service-frontend-tracer",
 	})
 	if err != nil {
-		log.Fatalf("can not initialize SegmentsService %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize Tracer %s", err.Error())))
+		return
 	}
+	defer flush()
 
-	if err := segments.Connect(); err != nil {
-		log.Fatalf("can not initialize SegmentsService gRPC Server %v", err)
-	}
-
-	movile, err := movile.NewService(movile.ServiceInput{})
+	repo, err := repository.NewService(repository.ServiceInput{
+		Tracer: tracer,
+		Logger: log,
+	})
 	if err != nil {
-		log.Fatalf("can not initialize MovileService %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize NotificationsRepository %v", err.Error())))
+		return
 	}
 
-	sendgrid, err := sendgrid.NewService(sendgrid.ServiceInput{})
+	segmentsGRPCClient, err := grpc.NewClient(grpc.ClientInput{
+		ServerAddress: fmt.Sprintf(
+			"%s:%d",
+			env.MustGetString("SEGMENTS_SERVICE_SERVER_HOST"),
+			env.MustGetInt("SEGMENTS_SERVICE_SERVER_PORT"),
+		),
+		Tracer: tracer,
+		Logger: log,
+	})
 	if err != nil {
-		log.Fatalf("can not initialize SendgridService %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize SegmentsService's gRPC client: %s", err.Error())))
+		return
 	}
 
-	firebase, err := firebase.NewService(firebase.ServiceInput{})
+	segmentsGRPCClientConn, err := segmentsGRPCClient.Connect(ctx)
 	if err != nil {
-		log.Fatalf("can not initialize FirebaseService %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not connect to SegmentsService's gRPC client: %s", err.Error())))
+		return
+	}
+
+	segments, err := segments.NewService(segments.ServiceInput{
+		BulkSize: env.MustGetInt("SEGMENTS_SERVICE_BULK_SIZE"),
+		Tracer:   tracer,
+		Logger:   log,
+		Client:   segmentsPb.NewSegmentsServiceFrontendClient(segmentsGRPCClientConn),
+	})
+	if err != nil {
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize SegmentsService %s", err.Error())))
+		return
+	}
+
+	movile, err := movile.NewService(movile.ServiceInput{
+		Tracer: tracer,
+		Logger: log,
+	})
+	if err != nil {
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize MovileService %s", err.Error())))
+		return
+	}
+
+	sendgrid, err := sendgrid.NewService(sendgrid.ServiceInput{
+		Tracer: tracer,
+		Logger: log,
+	})
+	if err != nil {
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize SendgridService %s", err.Error())))
+		return
+	}
+
+	firebase, err := firebase.NewService(firebase.ServiceInput{
+		Tracer: tracer,
+		Logger: log,
+	})
+	if err != nil {
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize FirebaseService %s", err.Error())))
+		return
 	}
 
 	providers := map[domain.Channel]domain.NotificationProvider{
@@ -66,29 +115,38 @@ func main() {
 	}
 
 	sender, err := sender.NewService(sender.ServiceInput{
+		Tracer:    tracer,
+		Logger:    log,
 		Repo:      repo,
 		Segments:  segments,
 		Providers: providers,
 	})
 	if err != nil {
-		log.Fatalf("can not initialize NotificationsSender %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize NotificationsSender %s", err.Error())))
+		return
 	}
 
 	worker, err := app.NewWorker(app.WorkerInput{Sender: sender})
 	if err != nil {
-		log.Fatalf("can not initialize GRPCNotificationsSender %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize GRPCNotificationsSender %s", err.Error())))
+		return
 	}
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", env.MustGetInt("PORT")))
+	s, err := grpc.NewServer(grpc.ServerInput{
+		Port:   env.MustGetInt("PORT"),
+		Tracer: tracer,
+		Logger: log,
+		Registrator: func(srv ggrpc.ServiceRegistrar) {
+			pb.RegisterNotificationsServiceWorkerServer(srv, worker)
+		},
+	})
 	if err != nil {
-		log.Fatalf("can not initialize gRPC server %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not create gRPC server %s", err.Error())))
+		return
 	}
 
-	s := grpc.NewServer()
-	pb.RegisterNotificationsServiceWorkerServer(s, worker)
-
-	log.Println("gRPC server started")
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("could not initialize grpc server: %v", err)
+	if err := s.Listen(ctx); err != nil {
+		log.Critical(ctx, errors.New(fmt.Sprintf("could not initialize grpc server: %s", err.Error())))
+		return
 	}
 }

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc"
+	"go.opentelemetry.io/otel/trace"
 
 	pb "github.com/lcnascimento/istio-knative-poc/exports-service/application/grpc/proto"
 
@@ -14,44 +14,34 @@ import (
 
 // ServiceInput ...
 type ServiceInput struct {
-	ServerAddress string
+	Tracer trace.Tracer
+	Client pb.ExportsServiceFrontendClient
 }
 
 // Service ...
 type Service struct {
 	in ServiceInput
-
-	cli pb.ExportsServiceFrontendClient
 }
 
 // NewService ...
 func NewService(in ServiceInput) (*Service, error) {
-	if in.ServerAddress == "" {
-		return nil, fmt.Errorf("Missing required dependency: ServerAddress")
+	if in.Tracer == nil {
+		return nil, fmt.Errorf("Missing required dependency: Tracer")
+	}
+
+	if in.Client == nil {
+		return nil, fmt.Errorf("Missing required dependency: Client")
 	}
 
 	return &Service{in: in}, nil
 }
 
-// Connect ...
-func (s *Service) Connect() error {
-	conn, err := grpc.Dial(s.in.ServerAddress, grpc.WithInsecure())
-	if err != nil {
-		return err
-	}
-
-	s.cli = pb.NewExportsServiceFrontendClient(conn)
-
-	return nil
-}
-
 // ListExports ...
 func (s Service) ListExports(ctx context.Context) ([]*model.Export, error) {
-	if s.cli == nil {
-		return nil, fmt.Errorf("client not connected to ExportsService gRPC server")
-	}
+	ctx, span := s.in.Tracer.Start(ctx, "graph.services.exports.ListExports")
+	defer span.End()
 
-	res, err := s.cli.ListExports(ctx, &pb.ListExportsRequest{})
+	res, err := s.in.Client.ListExports(ctx, &pb.ListExportsRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -66,11 +56,10 @@ func (s Service) ListExports(ctx context.Context) ([]*model.Export, error) {
 
 // GetExport ...
 func (s Service) GetExport(ctx context.Context, id string) (*model.Export, error) {
-	if s.cli == nil {
-		return nil, fmt.Errorf("client not connected to ExportsService gRPC server")
-	}
+	ctx, span := s.in.Tracer.Start(ctx, "graph.services.exports.GetExport")
+	defer span.End()
 
-	res, err := s.cli.GetExport(ctx, &pb.GetExportRequest{
+	res, err := s.in.Client.GetExport(ctx, &pb.GetExportRequest{
 		ExportId: id,
 	})
 	if err != nil {
@@ -82,9 +71,8 @@ func (s Service) GetExport(ctx context.Context, id string) (*model.Export, error
 
 // CreateExport ...
 func (s Service) CreateExport(ctx context.Context, in model.NewExport) (*model.Export, error) {
-	if s.cli == nil {
-		return nil, fmt.Errorf("client not connected to ExportsService gRPC server")
-	}
+	ctx, span := s.in.Tracer.Start(ctx, "graph.services.exports.CreateExport")
+	defer span.End()
 
 	return nil, services.ErrNotImplemented
 }

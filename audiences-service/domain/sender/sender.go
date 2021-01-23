@@ -2,14 +2,20 @@ package sender
 
 import (
 	"context"
-	"log"
+	"fmt"
+
+	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
+
+	infra "github.com/lcnascimento/istio-knative-poc/go-libs/infra"
 
 	"github.com/lcnascimento/istio-knative-poc/audiences-service/domain"
-	"golang.org/x/sync/errgroup"
 )
 
 // ServiceInput ...
 type ServiceInput struct {
+	Tracer  trace.Tracer
+	Logger  infra.LogProvider
 	Repo    domain.AudiencesRepository
 	Exports domain.ExportsService
 }
@@ -21,12 +27,23 @@ type Service struct {
 
 // NewService ...
 func NewService(in ServiceInput) (*Service, error) {
+	if in.Logger == nil {
+		return nil, fmt.Errorf("Missing required dependency: Logger")
+	}
+
+	if in.Tracer == nil {
+		return nil, fmt.Errorf("Missing required dependency: Tracer")
+	}
+
 	return &Service{in: in}, nil
 }
 
 // SendAudience ...
 func (s Service) SendAudience(ctx context.Context, id string, exportID string) error {
-	log.Printf("Sending audience %s", id)
+	ctx, span := s.in.Tracer.Start(ctx, "domain.sender.SendAudience")
+	defer span.End()
+
+	s.in.Logger.Info(ctx, "Sending audience %s", id)
 
 	aud, err := s.in.Repo.GetAudience(ctx, id)
 	if err != nil {
@@ -65,18 +82,24 @@ func (s Service) SendAudience(ctx context.Context, id string, exportID string) e
 		return err
 	}
 
-	log.Printf("Audience %s sent successfuly", id)
+	s.in.Logger.Info(ctx, "Audience %s sent successfuly", id)
 	return nil
 }
 
 func (s Service) downloadExport(ctx context.Context, url string) (string, error) {
-	log.Printf("Downloading export in %s", url)
+	ctx, span := s.in.Tracer.Start(ctx, "domain.sender.downloadExport")
+	defer span.End()
+
+	s.in.Logger.Info(ctx, "Downloading export in %s", url)
 
 	return "fake/path/to/export/file", nil
 }
 
 func (s Service) doDiff(ctx context.Context, oldPath, newPath string) error {
-	log.Println("Applying diff between old and new exports")
+	ctx, span := s.in.Tracer.Start(ctx, "domain.sender.doDiff")
+	defer span.End()
+
+	s.in.Logger.Info(ctx, "Applying diff between old and new exports")
 
 	return nil
 }

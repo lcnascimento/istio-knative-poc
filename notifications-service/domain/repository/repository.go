@@ -3,28 +3,46 @@ package repository
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"os"
+
+	"go.opentelemetry.io/otel/trace"
+
+	infra "github.com/lcnascimento/istio-knative-poc/go-libs/infra"
 
 	"github.com/lcnascimento/istio-knative-poc/notifications-service/domain"
 )
 
 // ServiceInput ...
 type ServiceInput struct {
+	Logger infra.LogProvider
+	Tracer trace.Tracer
 }
 
 // Service ...
 type Service struct {
+	in ServiceInput
 }
 
 // NewService ...
 func NewService(in ServiceInput) (*Service, error) {
-	return &Service{}, nil
+	if in.Logger == nil {
+		return nil, fmt.Errorf("Missing required dependency: Logger")
+	}
+
+	if in.Tracer == nil {
+		return nil, fmt.Errorf("Missing required dependency: Tracer")
+	}
+
+	return &Service{in: in}, nil
 }
 
 // GetNotification ...
 func (r Service) GetNotification(ctx context.Context, id string) (*domain.Notification, error) {
-	log.Printf("Fetch notification %s from database", id)
+	ctx, span := r.in.Tracer.Start(ctx, "domain.repository.GetNotification")
+	defer span.End()
+
+	r.in.Logger.Info(ctx, "Fetch notification %s from database", id)
 
 	notifications, err := r.ListNotifications(ctx)
 	if err != nil {
@@ -42,7 +60,10 @@ func (r Service) GetNotification(ctx context.Context, id string) (*domain.Notifi
 
 // ListNotifications ...
 func (r Service) ListNotifications(ctx context.Context) ([]*domain.Notification, error) {
-	log.Printf("Fetch notifications from database")
+	ctx, span := r.in.Tracer.Start(ctx, "domain.repository.ListNotifications")
+	defer span.End()
+
+	r.in.Logger.Info(ctx, "Fetch notifications from database")
 
 	file, err := os.Open("config/notifications.json")
 	if err != nil {

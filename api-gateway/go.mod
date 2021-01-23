@@ -20,5 +20,8 @@ require (
 	github.com/lcnascimento/istio-knative-poc/notifications-service v0.0.0-00010101000000-000000000000
 	github.com/lcnascimento/istio-knative-poc/segments-service v0.0.0-00010101000000-000000000000
 	github.com/vektah/gqlparser/v2 v2.1.0
+	go.opentelemetry.io/contrib/instrumentation/net/http v0.11.0
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.16.0
+	go.opentelemetry.io/otel v0.16.0
 	google.golang.org/grpc v1.34.0
 )

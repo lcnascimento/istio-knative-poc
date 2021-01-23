@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"time"
+
+	"go.opentelemetry.io/otel/trace"
+
+	infra "github.com/lcnascimento/istio-knative-poc/go-libs/infra"
 
 	"github.com/lcnascimento/istio-knative-poc/segments-service/domain"
 )
@@ -15,6 +18,9 @@ import (
 type ServiceInput struct {
 	NumberOfUsersInSegments int
 	NetworkDelay            time.Duration
+
+	Tracer trace.Tracer
+	Logger infra.LogProvider
 }
 
 // Service ...
@@ -24,6 +30,14 @@ type Service struct {
 
 // NewService ...
 func NewService(in ServiceInput) (*Service, error) {
+	if in.Tracer == nil {
+		return nil, fmt.Errorf("Missing required dependency: Tracer")
+	}
+
+	if in.Logger == nil {
+		return nil, fmt.Errorf("Missing required dependency: Logger")
+	}
+
 	if in.NumberOfUsersInSegments == 0 {
 		in.NumberOfUsersInSegments = 100
 	}
@@ -33,7 +47,10 @@ func NewService(in ServiceInput) (*Service, error) {
 
 // FindSegment ...
 func (r Service) FindSegment(ctx context.Context, id string) (*domain.Segment, error) {
-	log.Printf("Fetching segment %s from database", id)
+	ctx, span := r.in.Tracer.Start(ctx, "domain.repository.GetSegmentUsers")
+	defer span.End()
+
+	r.in.Logger.Info(ctx, "Fetching segment %s from database", id)
 
 	segments, err := r.ListSegments(ctx)
 	if err != nil {
@@ -51,11 +68,15 @@ func (r Service) FindSegment(ctx context.Context, id string) (*domain.Segment, e
 
 // ListSegments ...
 func (r Service) ListSegments(ctx context.Context) ([]*domain.Segment, error) {
-	log.Println("Fetching segments from database")
+	ctx, span := r.in.Tracer.Start(ctx, "domain.repository.ListSegments")
+	defer span.End()
+
+	r.in.Logger.Info(ctx, "Fetching segments from database")
 	time.Sleep(r.in.NetworkDelay)
 
 	file, err := os.Open("config/segments.json")
 	if err != nil {
+		r.in.Logger.Error(ctx, fmt.Errorf("could not open config/segments.json file: %s", err.Error()))
 		return nil, err
 	}
 
@@ -63,6 +84,7 @@ func (r Service) ListSegments(ctx context.Context) ([]*domain.Segment, error) {
 
 	parser := json.NewDecoder(file)
 	if err := parser.Decode(&segments); err != nil {
+		r.in.Logger.Error(ctx, fmt.Errorf("could not decode segments json file: %s", err.Error()))
 		return nil, err
 	}
 
@@ -71,6 +93,9 @@ func (r Service) ListSegments(ctx context.Context) ([]*domain.Segment, error) {
 
 // GetSegmentUsers ...
 func (r Service) GetSegmentUsers(ctx context.Context, id string, options domain.GetSegmentUsersOptions) (chan []*domain.User, chan error) {
+	ctx, span := r.in.Tracer.Start(ctx, "domain.repository.GetSegmentUsers")
+	defer span.End()
+
 	ch := make(chan []*domain.User)
 	errCh := make(chan error)
 
@@ -89,7 +114,7 @@ func (r Service) GetSegmentUsers(ctx context.Context, id string, options domain.
 		for i := 0; i < numBulks; i++ {
 			bulk := []*domain.User{}
 
-			log.Println("Fetching users from database")
+			r.in.Logger.Info(ctx, "Fetching users from database")
 			time.Sleep(r.in.NetworkDelay)
 			for j := 0; j < options.BulkSize; j++ {
 				bulk = append(bulk, &domain.User{
@@ -106,6 +131,8 @@ func (r Service) GetSegmentUsers(ctx context.Context, id string, options domain.
 			case ch <- bulk:
 			}
 		}
+
+		r.in.Logger.Info(ctx, "All users extracted successfuly")
 	}()
 
 	return ch, errCh

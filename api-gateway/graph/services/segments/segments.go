@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/grpc"
+	"go.opentelemetry.io/otel/trace"
 
 	pb "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc/proto"
 
@@ -13,44 +13,34 @@ import (
 
 // ServiceInput ...
 type ServiceInput struct {
-	ServerAddress string
+	Tracer trace.Tracer
+	Client pb.SegmentsServiceFrontendClient
 }
 
 // Service ...
 type Service struct {
 	in ServiceInput
-
-	cli pb.SegmentsServiceFrontendClient
 }
 
 // NewService ...
 func NewService(in ServiceInput) (*Service, error) {
-	if in.ServerAddress == "" {
-		return nil, fmt.Errorf("Missing required dependency: ServerAddress")
+	if in.Tracer == nil {
+		return nil, fmt.Errorf("Missing required dependency: Tracer")
+	}
+
+	if in.Client == nil {
+		return nil, fmt.Errorf("Missing required dependency: Client")
 	}
 
 	return &Service{in: in}, nil
 }
 
-// Connect ...
-func (s *Service) Connect() error {
-	conn, err := grpc.Dial(s.in.ServerAddress, grpc.WithInsecure())
-	if err != nil {
-		return err
-	}
-
-	s.cli = pb.NewSegmentsServiceFrontendClient(conn)
-
-	return nil
-}
-
 // ListSegments ...
 func (s Service) ListSegments(ctx context.Context) ([]*model.Segment, error) {
-	if s.cli == nil {
-		return nil, fmt.Errorf("client not connected to SegmentsService gRPC server")
-	}
+	ctx, span := s.in.Tracer.Start(ctx, "graph.services.segments.ListSegments")
+	defer span.End()
 
-	res, err := s.cli.ListSegments(ctx, &pb.ListSegmentsRequest{})
+	res, err := s.in.Client.ListSegments(ctx, &pb.ListSegmentsRequest{})
 	if err != nil {
 		return nil, err
 	}
@@ -65,11 +55,10 @@ func (s Service) ListSegments(ctx context.Context) ([]*model.Segment, error) {
 
 // GetSegment ...
 func (s Service) GetSegment(ctx context.Context, id string) (*model.Segment, error) {
-	if s.cli == nil {
-		return nil, fmt.Errorf("client not connected to SegmentsService gRPC server")
-	}
+	ctx, span := s.in.Tracer.Start(ctx, "graph.services.segments.GetSegment")
+	defer span.End()
 
-	res, err := s.cli.GetSegment(ctx, &pb.GetSegmentRequest{
+	res, err := s.in.Client.GetSegment(ctx, &pb.GetSegmentRequest{
 		SegmentId: id,
 	})
 	if err != nil {

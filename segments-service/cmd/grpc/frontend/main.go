@@ -1,14 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"log"
-	"net"
 	"time"
 
-	"google.golang.org/grpc"
+	ggrpc "google.golang.org/grpc"
 
 	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/env"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/errors"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/grpc"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/log"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/tracing"
 
 	app "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc"
 	pb "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc/proto"
@@ -17,24 +20,57 @@ import (
 )
 
 func main() {
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", env.MustGetInt("PORT")))
+	ctx := context.Background()
+
+	log, err := log.NewClient(log.ClientInput{Level: log.DebugLevel})
+
+	tracer, flush, err := tracing.Init(tracing.TracerInput{
+		AgentEndpoint: fmt.Sprintf("%s:%d", env.MustGetString("JAEGER_AGENT_HOST"), env.MustGetInt("JAEGER_AGENT_PORT")),
+		ServiceName:   "segments-service-frontend",
+		TracerName:    "segments-service-frontend-tracer",
+	})
 	if err != nil {
-		log.Fatalf("can not initialize server %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize Tracer %s", err.Error())))
+		return
 	}
+	defer flush()
 
 	repo, err := repository.NewService(repository.ServiceInput{
 		NetworkDelay:            time.Millisecond * time.Duration(env.MustGetInt("NETWORK_DELAY_IN_MILLISECONDS")),
 		NumberOfUsersInSegments: env.MustGetInt("NUMBER_OF_MOCKED_USERS_IN_SEGMENTS"),
+		Tracer:                  tracer,
+		Logger:                  log,
 	})
 	if err != nil {
-		log.Fatalf("could not initialize SegmentsRepository: %v", err)
+		log.Critical(ctx, errors.New(fmt.Sprintf("could not initialize SegmentsRepository: %s", err.Error())))
+		return
 	}
 
-	s := grpc.NewServer()
-	pb.RegisterSegmentsServiceFrontendServer(s, app.NewFrontend(app.FrontendInput{Repo: repo}))
+	frontend, err := app.NewFrontend(app.FrontendInput{
+		Tracer: tracer,
+		Logger: log,
+		Repo:   repo,
+	})
+	if err != nil {
+		log.Critical(ctx, errors.New(fmt.Sprintf("could not initialize Frontend: %v", err.Error())))
+		return
+	}
 
-	log.Println("gRPC server started")
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("could not initialize grpc server: %v", err)
+	s, err := grpc.NewServer(grpc.ServerInput{
+		Port:   env.MustGetInt("PORT"),
+		Tracer: tracer,
+		Logger: log,
+		Registrator: func(srv ggrpc.ServiceRegistrar) {
+			pb.RegisterSegmentsServiceFrontendServer(srv, frontend)
+		},
+	})
+	if err != nil {
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not create gRPC server %s", err.Error())))
+		return
+	}
+
+	if err := s.Listen(ctx); err != nil {
+		log.Critical(ctx, errors.New(fmt.Sprintf("could not initialize grpc server: %s", err.Error())))
+		return
 	}
 }
