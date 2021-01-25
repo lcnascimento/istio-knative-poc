@@ -47,7 +47,7 @@ func NewService(in ServiceInput) (*Service, error) {
 
 // FindSegment ...
 func (r Service) FindSegment(ctx context.Context, id string) (*domain.Segment, error) {
-	ctx, span := r.in.Tracer.Start(ctx, "domain.repository.GetSegmentUsers")
+	ctx, span := r.in.Tracer.Start(ctx, "domain.repository.FindSegment")
 	defer span.End()
 
 	r.in.Logger.Info(ctx, "Fetching segment %s from database", id)
@@ -94,12 +94,12 @@ func (r Service) ListSegments(ctx context.Context) ([]*domain.Segment, error) {
 // GetSegmentUsers ...
 func (r Service) GetSegmentUsers(ctx context.Context, id string, options domain.GetSegmentUsersOptions) (chan []*domain.User, chan error) {
 	ctx, span := r.in.Tracer.Start(ctx, "domain.repository.GetSegmentUsers")
-	defer span.End()
 
 	ch := make(chan []*domain.User)
 	errCh := make(chan error)
 
 	go func() {
+		defer span.End()
 		defer close(ch)
 		defer close(errCh)
 

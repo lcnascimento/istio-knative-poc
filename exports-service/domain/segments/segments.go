@@ -49,7 +49,6 @@ func NewService(in ServiceInput) (*Service, error) {
 // GetSegmentUsers ...
 func (s Service) GetSegmentUsers(ctx context.Context, id string) (chan []*domain.User, chan error) {
 	ctx, span := s.in.Tracer.Start(ctx, "domain.segments.GetSegmentUsers")
-	defer span.End()
 
 	s.in.Logger.Info(ctx, "Loading users from segment %s", id)
 
@@ -57,6 +56,7 @@ func (s Service) GetSegmentUsers(ctx context.Context, id string) (chan []*domain
 	errCh := make(chan error)
 
 	go func() {
+		defer span.End()
 		defer close(ch)
 		defer close(errCh)
 

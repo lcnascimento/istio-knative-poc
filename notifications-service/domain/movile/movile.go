@@ -38,12 +38,13 @@ func NewService(in ServiceInput) (*Service, error) {
 // SendNotification ...
 func (s Service) SendNotification(ctx context.Context, notif domain.Notification, ch chan []*domain.User) (chan bool, chan error) {
 	ctx, span := s.in.Tracer.Start(ctx, "domain.movile.SendNotification")
-	defer span.End()
 
 	done := make(chan bool)
 	errCh := make(chan error)
 
 	go func() {
+		defer span.End()
+
 		for bulk := range ch {
 			s.in.Logger.Info(ctx, "Sending %d SMSs via Movile", len(bulk))
 		}
