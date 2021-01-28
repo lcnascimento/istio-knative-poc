@@ -12,10 +12,10 @@ import (
 
 // TracerInput ...
 type TracerInput struct {
-	ServiceName   string
-	TracerName    string
-	AgentEndpoint string
-	Tags          []label.KeyValue
+	ApplicationName string
+	TracerName      string
+	AgentEndpoint   string
+	Tags            []label.KeyValue
 }
 
 // Init ...
@@ -23,7 +23,7 @@ func Init(in TracerInput) (trace.Tracer, func(), error) {
 	flush, err := jaeger.InstallNewPipeline(
 		jaeger.WithAgentEndpoint(in.AgentEndpoint),
 		jaeger.WithProcess(jaeger.Process{
-			ServiceName: in.ServiceName,
+			ServiceName: in.ApplicationName,
 			Tags:        in.Tags,
 		}),
 		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),

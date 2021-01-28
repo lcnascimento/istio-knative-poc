@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/grpc-ecosystem/go-grpc-prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 
@@ -57,10 +58,18 @@ func (s Server) Listen(ctx context.Context) error {
 	}
 
 	srv := ggrpc.NewServer(
-		grpc.UnaryInterceptor(otelgrpc.UnaryServerInterceptor()),
-		grpc.StreamInterceptor(otelgrpc.StreamServerInterceptor()),
+		grpc.ChainUnaryInterceptor(
+			otelgrpc.UnaryServerInterceptor(),
+			grpc_prometheus.UnaryServerInterceptor,
+		),
+		grpc.ChainStreamInterceptor(
+			otelgrpc.StreamServerInterceptor(),
+			grpc_prometheus.StreamServerInterceptor,
+		),
 	)
+
 	s.in.Registrator(srv)
+	grpc_prometheus.Register(srv)
 
 	s.in.Logger.Debug(ctx, "gRPC server started")
 	if err := srv.Serve(lis); err != nil {
@@ -98,8 +107,14 @@ func (c Client) Connect(ctx context.Context) (*grpc.ClientConn, error) {
 	conn, err := grpc.Dial(
 		c.in.ServerAddress,
 		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(otelgrpc.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(otelgrpc.StreamClientInterceptor()),
+		grpc.WithChainUnaryInterceptor(
+			otelgrpc.UnaryClientInterceptor(),
+			grpc_prometheus.UnaryClientInterceptor,
+		),
+		grpc.WithChainStreamInterceptor(
+			otelgrpc.StreamClientInterceptor(),
+			grpc_prometheus.StreamClientInterceptor,
+		),
 	)
 	if err != nil {
 		c.in.Logger.Critical(ctx, errors.New("could not connect to grpc server: %s", err.Error()))

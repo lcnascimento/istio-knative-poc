@@ -33,15 +33,17 @@ import (
 	segmentsPb "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc/proto"
 )
 
+const applicationName = "api-gateway"
+
 func main() {
 	ctx := context.Background()
 
 	log, err := log.NewClient(log.ClientInput{Level: log.DebugLevel})
 
 	tracer, flush, err := tracing.Init(tracing.TracerInput{
-		AgentEndpoint: fmt.Sprintf("%s:%d", env.MustGetString("JAEGER_AGENT_HOST"), env.MustGetInt("JAEGER_AGENT_PORT")),
-		ServiceName:   "api-gateway",
-		TracerName:    "api-gateway-tracer",
+		AgentEndpoint:   fmt.Sprintf("%s:%d", env.MustGetString("JAEGER_AGENT_HOST"), env.MustGetInt("JAEGER_AGENT_PORT")),
+		ApplicationName: applicationName,
+		TracerName:      fmt.Sprintf("%s-tracer", applicationName),
 	})
 	if err != nil {
 		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize Tracer %s", err.Error())))

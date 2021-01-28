@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 5s
+  external_labels:
+    monitor: 'istio-knative-poc-monitor'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'segments_service_frontend'
+    static_configs:
+      - targets: ['segments_service_frontend:3001']
+
+  - job_name: 'notifications_service_frontend'
+    static_configs:
+      - targets: ['notifications_service_frontend:3001']
+
+  - job_name: 'notifications_service_worker'
+    static_configs:
+      - targets: ['notifications_service_worker:3001']
+
+  - job_name: 'exports_service_frontend'
+    static_configs:
+      - targets: ['exports_service_frontend:3001']
+
+  - job_name: 'exports_service_worker'
+    static_configs:
+      - targets: ['exports_service_worker:3001']
+
+  - job_name: 'audiences_service_frontend'
+    static_configs:
+      - targets: ['audiences_service_frontend:3001']

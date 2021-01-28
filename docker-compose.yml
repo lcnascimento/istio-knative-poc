@@ -31,6 +31,8 @@ services:
     command: go run cmd/grpc/frontend/main.go
     env_file: 
       - segments-service/config/.env
+    ports:
+      - "3001:3001"
     volumes:
       - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
       - ./segments-service:/go/src/github.com/lcnascimento/istio-knative-poc/segments-service
@@ -43,6 +45,8 @@ services:
     command: go run cmd/grpc/frontend/main.go
     env_file: 
       - notifications-service/config/.env
+    ports:
+      - "3002:3000"
     volumes:
       - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
       - ./notifications-service:/go/src/github.com/lcnascimento/istio-knative-poc/notifications-service
@@ -58,6 +62,8 @@ services:
     command: go run cmd/grpc/worker/main.go
     env_file: 
       - notifications-service/config/.env
+    ports:
+      - "3003:3000"
     volumes:
       - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
       - ./notifications-service:/go/src/github.com/lcnascimento/istio-knative-poc/notifications-service
@@ -73,6 +79,8 @@ services:
     command: go run cmd/grpc/frontend/main.go
     env_file: 
       - exports-service/config/.env
+    ports:
+      - "3004:3000"
     volumes:
       - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
       - ./exports-service:/go/src/github.com/lcnascimento/istio-knative-poc/exports-service
@@ -86,6 +94,8 @@ services:
     command: go run cmd/grpc/worker/main.go
     env_file: 
       - exports-service/config/.env
+    ports:
+      - "3005:3000"
     volumes:
       - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
       - ./exports-service:/go/src/github.com/lcnascimento/istio-knative-poc/exports-service
@@ -101,6 +111,8 @@ services:
     command: go run cmd/grpc/frontend/main.go
     env_file: 
       - audiences-service/config/.env
+    ports:
+      - "3006:3000"
     volumes:
       - ./go-libs:/go/src/github.com/lcnascimento/istio-knative-poc/go-libs
       - ./audiences-service:/go/src/github.com/lcnascimento/istio-knative-poc/audiences-service
@@ -118,6 +130,34 @@ services:
       - "14268:14268"
       - "16686:16686"
     container_name: istio_knative_poc_jaeger
+  
+  prometheus:
+    image: prom/prometheus:v2.14.0
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - segments_service_frontend
+      - notifications_service_frontend
+      - notifications_service_worker
+      - exports_service_frontend
+      - audiences_service_frontend
+    container_name: istio_knative_poc_prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_USER=dito
+      - GF_SECURITY_ADMIN_PASSWORD=dito2017
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - jaeger
+    ports:
+      - "9091:3000"
+    container_name: istio_knative_poc_grafana
 
 volumes:
   api-gateway-pkgs:
@@ -127,4 +167,5 @@ volumes:
   exports-service-frontend-pkgs:
   exports-service-worker-pkgs:
   audiences-service-frontend-pkgs:
+  grafana-data:
     

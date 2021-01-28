@@ -11,6 +11,7 @@ import (
 	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/errors"
 	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/grpc"
 	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/log"
+	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/metrics"
 	"github.com/lcnascimento/istio-knative-poc/go-libs/infra/tracing"
 
 	app "github.com/lcnascimento/istio-knative-poc/segments-service/application/grpc"
@@ -19,21 +20,32 @@ import (
 	"github.com/lcnascimento/istio-knative-poc/segments-service/domain/repository"
 )
 
+const applicationName = "segments-service-frontend"
+
 func main() {
 	ctx := context.Background()
 
 	log, err := log.NewClient(log.ClientInput{Level: log.DebugLevel})
 
 	tracer, flush, err := tracing.Init(tracing.TracerInput{
-		AgentEndpoint: fmt.Sprintf("%s:%d", env.MustGetString("JAEGER_AGENT_HOST"), env.MustGetInt("JAEGER_AGENT_PORT")),
-		ServiceName:   "segments-service-frontend",
-		TracerName:    "segments-service-frontend-tracer",
+		AgentEndpoint:   fmt.Sprintf("%s:%d", env.MustGetString("JAEGER_AGENT_HOST"), env.MustGetInt("JAEGER_AGENT_PORT")),
+		ApplicationName: applicationName,
+		TracerName:      fmt.Sprintf("%s-tracer", applicationName),
 	})
 	if err != nil {
 		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize Tracer %s", err.Error())))
 		return
 	}
 	defer flush()
+
+	_, err = metrics.Init(metrics.MeterInput{
+		ApplicationName: applicationName,
+		ServerPort:      env.MustGetInt("PROMETHEUS_METRICS_EXPORTER_PORT"),
+	})
+	if err != nil {
+		log.Critical(ctx, errors.New(fmt.Sprintf("can not initialize Meter %s", err.Error())))
+		return
+	}
 
 	repo, err := repository.NewService(repository.ServiceInput{
 		NetworkDelay:            time.Millisecond * time.Duration(env.MustGetInt("NETWORK_DELAY_IN_MILLISECONDS")),

@@ -7,12 +7,22 @@ import (
 	"os"
 	"time"
 
+	"go.opentelemetry.io/otel/label"
 	"go.opentelemetry.io/otel/trace"
 
 	infra "github.com/lcnascimento/istio-knative-poc/go-libs/infra"
 
 	"github.com/lcnascimento/istio-knative-poc/segments-service/domain"
 )
+
+const (
+	usersExportedMetricName = "dito_segments_service_users_exported_total"
+)
+
+type metricValue struct {
+	value  int64
+	labels []label.KeyValue
+}
 
 // ServiceInput ...
 type ServiceInput struct {
